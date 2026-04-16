@@ -130,6 +130,31 @@ function mediaPathUrl(string $path): string {
     return mediaUrl($path);
 }
 
+function resolvePublicAssetUrl(?string $rawPath): string {
+    $rawPath = trim((string) $rawPath);
+    if ($rawPath === '') {
+        return '';
+    }
+    if (preg_match('#^https?://#i', $rawPath)) {
+        return $rawPath;
+    }
+
+    $normalized = normalizeProjectRelativePath($rawPath);
+    if (str_starts_with($normalized, 'backend/')) {
+        return siteUrl($normalized);
+    }
+
+    return staticUrl($normalized);
+}
+
+function resolveAvatarUrl(?string $rawPath, string $default = 'images/starwaves-logo.svg'): string {
+    $rawPath = trim((string) $rawPath);
+    if ($rawPath === '') {
+        return resolvePublicAssetUrl($default);
+    }
+    return resolvePublicAssetUrl($rawPath);
+}
+
 function netdiskSongProxyUrl(int $songId, string $context = 'backend', string $variant = 'original'): string {
     $query = ['id' => $songId];
     if ($variant !== 'original') {

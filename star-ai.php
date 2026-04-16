@@ -139,10 +139,10 @@ try {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>STAR.AI | 星浪音乐</title>
-    <link href="css/bootstrap.css" rel="stylesheet" type="text/css" media="all" />
-    <link href="css/style.css" rel="stylesheet" type="text/css" media="all" />
-    <link href="css/starwaves.css" rel="stylesheet" type="text/css" media="all" />
-    <link href="css/font-awesome.css" rel="stylesheet">
+    <link href="<?php echo htmlspecialchars(siteAssetUrl('css/bootstrap.css')); ?>" rel="stylesheet" type="text/css" media="all" />
+    <link href="<?php echo htmlspecialchars(siteAssetUrl('css/style.css')); ?>" rel="stylesheet" type="text/css" media="all" />
+    <link href="<?php echo htmlspecialchars(siteAssetUrl('css/starwaves.css')); ?>" rel="stylesheet" type="text/css" media="all" />
+    <link href="<?php echo htmlspecialchars(siteAssetUrl('css/font-awesome.css')); ?>" rel="stylesheet">
     <style>
         html, body {
             max-width: 100%;
@@ -1330,7 +1330,7 @@ try {
                     </button>
                     <h1>
                         <a class="navbar-brand starwaves-brand" href="index.php">
-                            <img src="images/starwaves-logo.svg" alt="星浪音乐" class="brand-mark" />
+                            <img src="<?php echo htmlspecialchars(siteAssetUrl('images/starwaves-logo.svg')); ?>" alt="星浪音乐" class="brand-mark" />
                             <span class="brand-text-wrap"><strong>星浪音乐</strong><em>STARWAVES MUSIC</em></span>
                         </a>
                     </h1>
@@ -3387,7 +3387,7 @@ document.querySelectorAll('[data-track-action="stems-submit"]').forEach(function
         <audio id="globalBottomAudio" controls preload="none" class="song-bottom-player__audio"></audio>
     </div>
 </div>
-<script src="js/global-player.js"></script>
+<script src="<?php echo htmlspecialchars(siteAssetUrl('js/global-player.js')); ?>"></script>
 <script>
 if (window.StarwavesGlobalPlayer && typeof window.StarwavesGlobalPlayer.hide === 'function') {
     window.StarwavesGlobalPlayer.hide();

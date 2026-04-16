@@ -43,6 +43,7 @@ if (count($recentSongs) < 4) {
     $recentSongs = array_merge($recentSongs, array_slice($demoSongs, 0, 4 - count($recentSongs)));
 }
 ?>
+<?php $staticBase = rtrim(staticBaseUrl(), '/'); ?>
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -51,13 +52,13 @@ if (count($recentSongs) < 4) {
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <meta name="description" content="星浪音乐是面向独立音乐人的创作、上传与发现平台。" />
     <meta name="keywords" content="星浪音乐,原创音乐,音乐上传,独立音乐人,音乐平台" />
-    <link href="css/bootstrap.css" rel="stylesheet" type="text/css" media="all" />
-    <link href="css/owl.carousel.css" rel="stylesheet">
-    <link rel="stylesheet" href="css/team.css" type="text/css" media="all" />
-    <link href="css/style.css" rel="stylesheet" type="text/css" media="all" />
-    <link href="css/starwaves.css" rel="stylesheet" type="text/css" media="all" />
-    <link href="css/starwaves_top_extra.css" rel="stylesheet" type="text/css" media="all" />
-    <link href="css/font-awesome.css" rel="stylesheet">
+    <link href="<?php echo htmlspecialchars(siteAssetUrl('css/bootstrap.css')); ?>" rel="stylesheet" type="text/css" media="all" />
+    <link href="<?php echo htmlspecialchars(siteAssetUrl('css/owl.carousel.css')); ?>" rel="stylesheet">
+    <link rel="stylesheet" href="<?php echo htmlspecialchars(siteAssetUrl('css/team.css')); ?>" type="text/css" media="all" />
+    <link href="<?php echo htmlspecialchars(siteAssetUrl('css/style.css')); ?>" rel="stylesheet" type="text/css" media="all" />
+    <link href="<?php echo htmlspecialchars(siteAssetUrl('css/starwaves.css')); ?>" rel="stylesheet" type="text/css" media="all" />
+    <link href="<?php echo htmlspecialchars(siteAssetUrl('css/starwaves_top_extra.css')); ?>" rel="stylesheet" type="text/css" media="all" />
+    <link href="<?php echo htmlspecialchars(siteAssetUrl('css/font-awesome.css')); ?>" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css?family=Raleway:400,600,700,800" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,600,700" rel="stylesheet">
 </head>
@@ -74,7 +75,7 @@ if (count($recentSongs) < 4) {
                     </button>
                     <h1>
                         <a class="navbar-brand starwaves-brand" href="index.php">
-                            <img src="images/starwaves-logo.svg" alt="星浪音乐" class="brand-mark" />
+                            <img src="<?php echo htmlspecialchars(siteAssetUrl('images/starwaves-logo.svg')); ?>" alt="星浪音乐" class="brand-mark" />
                             <span class="brand-text-wrap"><strong>星浪音乐</strong><em>STARWAVES MUSIC</em></span>
                         </a>
                     </h1>
@@ -90,7 +91,7 @@ if (count($recentSongs) < 4) {
                         </ul>
                     </nav>
                     <?php if ($isLoggedIn && $currentUser): ?>
-                        <?php $navAvatar = !empty($currentUser['avatar_path']) ? 'backend/' . ltrim($currentUser['avatar_path'], '/') : 'images/starwaves-logo.svg'; ?>
+                        <?php $navAvatar = resolveAvatarUrl(!empty($currentUser['avatar_path']) ? 'backend/' . ltrim($currentUser['avatar_path'], '/') : 'images/starwaves-logo.svg'); ?>
                         <a class="site-user-chip" href="backend/admin.php">
                             <img src="<?php echo htmlspecialchars($navAvatar); ?>" alt="avatar">
                             <span><?php echo htmlspecialchars($currentUser['full_name'] ?: $currentUser['username']); ?></span>
@@ -176,7 +177,7 @@ if (count($recentSongs) < 4) {
                     <?php foreach ($recentSongs as $idx => $song): ?>
                         <?php
                             $isDemoSong = !empty($song['is_demo']);
-                            $avatar = !empty($song['avatar_path']) ? (strpos((string) $song['avatar_path'], 'images/') === 0 ? $song['avatar_path'] : 'backend/' . ltrim($song['avatar_path'], '/')) : 'images/starwaves-logo.svg';
+                            $avatar = resolveAvatarUrl(!empty($song['avatar_path']) ? (strpos((string) $song['avatar_path'], 'images/') === 0 ? $song['avatar_path'] : 'backend/' . ltrim($song['avatar_path'], '/')) : 'images/starwaves-logo.svg');
                             $audioSrc = $isDemoSong ? '' : resolveSongAudioUrl($song, 'frontend');
                             $durationLabel = $isDemoSong ? '--:--' : songDurationLabel($song);
                             $artistName = $song['full_name'] ?: $song['username'] ?: '星浪精选';
@@ -220,9 +221,12 @@ if (count($recentSongs) < 4) {
 
     <div class="footer"><div class="f-bg-w3l"><div class="container"><div class="col-md-4 w3layouts_footer_grid"><h2>星浪 <span>音乐</span></h2></div><div class="col-md-8 w3layouts_footer_grid"><ul class="w3l_footer_nav"><li><a href="index.php" class="active">首页</a></li><li><a href="#star-ai">STAR.AI</a></li><li><a href="backend/login.php">登录</a></li></ul><p>Copyright &copy; 2026 Starwaves. 星浪音乐，先用 STAR.AI 出歌，再把作品推进到音乐榜展示与发现。</p></div><div class="clearfix"></div></div></div></div>
 
-    <script type="text/javascript" src="js/jquery-2.1.4.min.js"></script>
-    <script type="text/javascript" src="js/bootstrap-3.1.1.min.js"></script>
-    <script src="js/global-player.js"></script>
+    <script>
+    window.StarwavesStaticBase = <?php echo json_encode($staticBase, JSON_UNESCAPED_SLASHES); ?>;
+    </script>
+    <script type="text/javascript" src="<?php echo htmlspecialchars(siteAssetUrl('js/jquery-2.1.4.min.js')); ?>"></script>
+    <script type="text/javascript" src="<?php echo htmlspecialchars(siteAssetUrl('js/bootstrap-3.1.1.min.js')); ?>"></script>
+    <script src="<?php echo htmlspecialchars(siteAssetUrl('js/global-player.js')); ?>"></script>
     <script>
     (function () {
         function playTrack(button) {

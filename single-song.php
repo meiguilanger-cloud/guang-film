@@ -65,10 +65,10 @@ if ($id > 0) {
     <title>歌曲详情 | 星浪音乐</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <link href="css/bootstrap.css" rel="stylesheet" type="text/css" media="all" />
-    <link href="css/style.css" rel="stylesheet" type="text/css" media="all" />
-    <link href="css/starwaves.css" rel="stylesheet" type="text/css" media="all" />
-    <link href="css/font-awesome.css" rel="stylesheet">
+    <link href="<?php echo htmlspecialchars(siteAssetUrl('css/bootstrap.css')); ?>" rel="stylesheet" type="text/css" media="all" />
+    <link href="<?php echo htmlspecialchars(siteAssetUrl('css/style.css')); ?>" rel="stylesheet" type="text/css" media="all" />
+    <link href="<?php echo htmlspecialchars(siteAssetUrl('css/starwaves.css')); ?>" rel="stylesheet" type="text/css" media="all" />
+    <link href="<?php echo htmlspecialchars(siteAssetUrl('css/font-awesome.css')); ?>" rel="stylesheet">
     <style>
         .lyrics-panel { max-height: 340px; overflow-y: auto; padding-right: 8px; }
         .lyrics-line { padding: 8px 12px; border-radius: 10px; transition: all .2s ease; color: #555; }
@@ -82,7 +82,7 @@ if ($id > 0) {
                 <div class="navbar-header navbar-left">
                     <h1>
                         <a class="navbar-brand starwaves-brand" href="index.php">
-                            <img src="images/starwaves-logo.svg" alt="星浪音乐" class="brand-mark" />
+                            <img src="<?php echo htmlspecialchars(siteAssetUrl('images/starwaves-logo.svg')); ?>" alt="星浪音乐" class="brand-mark" />
                             <span class="brand-text-wrap"><strong>星浪音乐</strong><em>Starwaves</em></span>
                         </a>
                     </h1>
@@ -96,7 +96,7 @@ if ($id > 0) {
                         </ul>
                     </nav>
                     <?php if ($isLoggedIn && $currentUser): ?>
-                        <?php $navAvatar = !empty($currentUser['avatar_path']) ? 'backend/' . ltrim($currentUser['avatar_path'], '/') : 'images/starwaves-logo.svg'; ?>
+                        <?php $navAvatar = resolveAvatarUrl(!empty($currentUser['avatar_path']) ? 'backend/' . ltrim($currentUser['avatar_path'], '/') : 'images/starwaves-logo.svg'); ?>
                         <a class="site-user-chip" href="backend/admin.php">
                             <img src="<?php echo htmlspecialchars($navAvatar); ?>" alt="avatar">
                             <span><?php echo htmlspecialchars($currentUser['full_name'] ?: $currentUser['username']); ?></span>
@@ -125,7 +125,7 @@ if ($id > 0) {
                     $activePlayerUrl = $masteredPreviewUrl !== '' ? $masteredPreviewUrl : $originalUrl;
                     $durationLabel = songDurationLabel($song, '00:00');
                 ?>
-                <?php $avatar = !empty($song['avatar_path']) ? 'backend/' . ltrim($song['avatar_path'], '/') : 'images/starwaves-logo.svg'; ?>
+                <?php $avatar = resolveAvatarUrl(!empty($song['avatar_path']) ? 'backend/' . ltrim($song['avatar_path'], '/') : 'images/starwaves-logo.svg'); ?>
                 <div class="song-detail-card">
                     <span class="backend-kicker">Song Detail</span>
                     <h1><?php echo htmlspecialchars($song['title']); ?></h1>
