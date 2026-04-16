@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>STAR TOP榜 - Starwaves Music</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 text-gray-900">
+  <nav class="bg-white shadow-md">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+      <div class="flex items-center space-x-4">
+        <a href="index.html" class="text-xl font-bold text-indigo-600">Starwaves Music</a>
+        <a href="star-ai.html" class="text-gray-700 hover:text-indigo-600">STAR.AI</a>
+        
+        
+        <a href="top.html" class="text-indigo-600 font-semibold">STAR TOP榜</a>
+      </div>
+      <div id="user-section" class="flex items-center space-x-2"></div>
+    </div>
+  </nav>
+
+  <section class="max-w-5xl mx-auto py-12">
+    <h1 class="text-3xl font-bold mb-6">STAR TOP榜</h1>
+    <p class="mb-4 text-gray-600">（占位）待接入真实榜单数据，当前展示示例列表。</p>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+      ${Array.from({length:20}).map((_,i)=>`<div class="bg-white p-4 rounded shadow">
+        <div class="bg-gray-200 h-40 mb-2 rounded"></div>
+        <p class="text-sm font-medium">歌曲 ${i+1}</p>
+        <p class="text-xs text-gray-500">艺术家 ${i+1}</p>
+      </div>`).join('')}
+    </div>
+  </section>
+
+  <footer class="bg-gray-800 text-gray-200 py-4 mt-12">
+    <div class="max-w-7xl mx-auto text-center">© 2026 Starwaves Music</div>
+  </footer>
+
+  <script>
+    async function renderUserSection(){
+      const userSection=document.getElementById('user-section');
+      try {
+        const resp=await fetch('/backend/status.php', {credentials:'include'});
+        const data=await resp.json();
+        if(data.logged_in){
+          userSection.innerHTML=`<span class='mr-2'>欢迎, ${data.username}</span><a href='/backend/logout.php' class='px-2 py-1 bg-gray-600 rounded hover:bg-gray-5'>退出</a>`;
+        } else {
+          userSection.innerHTML=`<a href='/backend/login.php' class='px-3 py-1 bg-indigo-600 text-white rounded hover:bg-indigo-500'>登录 / 注册</a>`;
+        }
+      } catch(e){
+        console.error('登录状态获取失败',e);
+        userSection.innerHTML=`<a href='/backend/login.php' class='px-3 py-1 bg-indigo-600 text-white rounded hover:bg-indigo-500'>登录 / 注册</a>`;
+      }
+    }
+    renderUserSection();
+  </script>
+</body>
+</html>

@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Starwaves Music - 星浪音乐</title>
+  <!-- Tailwind via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="icon" href="/favicon.ico" />
+</head>
+<body class="bg-gray-100 text-gray-900">
+  <!-- Navbar -->
+  <nav class="bg-white shadow-md">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+      <div class="flex items-center space-x-4">
+        <a href="/" class="text-xl font-bold text-indigo-600">Starwaves Music</a>
+        <a href="/star-ai.html" class="text-gray-700 hover:text-indigo-600">STAR.AI</a>
+        
+        
+        <a href="/top.html" class="text-gray-700 hover:text-indigo-600">STAR TOP榜</a>
+      </div>
+      <div id="user-section" class="flex items-center space-x-2">
+        <button id="login-btn" class="px-3 py-1 bg-indigo-600 text-white rounded hover:bg-indigo-500">登录 / 注册</button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero Banner -->
+  <section class="bg-indigo-600 text-white py-20">
+    <div class="max-w-4xl mx-auto text-center">
+      <h1 class="text-4xl md:text-5xl font-bold mb-4">让AI点燃你的创作灵感</h1>
+      <p class="text-lg mb-6">使用STAR.AI, 自动混音, 专业母带，一站式音乐创作平台。</p>
+      <a href="/star-ai.html" class="inline-block bg-white text-indigo-600 font-semibold px-6 py-3 rounded hover:bg-gray-100">立即体验 STAR.AI</a>
+    </div>
+  </section>
+
+  <!-- Placeholder for STAR TOP榜 -->
+  <section class="max-w-7xl mx-auto py-12" id="top-section">
+    <h2 class="text-2xl font-bold mb-4">STAR TOP榜 (示例占位)</h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+      <!-- Placeholder cards -->
+      ${Array.from({length:10}).map((_,i)=>`<div class="bg-white p-4 rounded shadow">
+        <div class="bg-gray-200 h-40 mb-2 rounded"></div>
+        <p class="text-sm font-medium">歌曲标题 ${i+1}</p>
+        <p class="text-xs text-gray-500">艺术家 ${i+1}</p>
+      </div>`).join('')}
+    </div>
+    <div class="mt-6 text-center">
+      <a href="/top.html" class="text-indigo-600 hover:underline">查看完整榜单 »</a>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="bg-gray-800 text-gray-200 py-6 mt-12">
+    <div class="max-w-7xl mx-auto text-center">
+      <p>© 2026 Starwaves Music. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <script>
+    // Login status via backend session
+    async function renderUserSection(){
+      const userSection = document.getElementById('user-section');
+      try {
+        const resp = await fetch('/backend/status.php', {credentials: 'include'});
+        const data = await resp.json();
+        if (data.logged_in) {
+          userSection.innerHTML = `<span class=\"mr-2\">欢迎, ${data.username}</span><a href=\"/backend/logout.php\" class=\"px-2 py-1 bg-gray-600 rounded hover:bg-gray-500\">退出</a>`;
+        } else {
+          userSection.innerHTML = `<a href=\"/backend/login.php\" class=\"px-3 py-1 bg-indigo-600 text-white rounded hover:bg-indigo-500\">登录 / 注册</a>`;
+        }
+      } catch (e) {
+        console.error('登录状态获取失败', e);
+        // fallback to login link
+        userSection.innerHTML = `<a href=\"/backend/login.php\" class=\"px-3 py-1 bg-indigo-600 text-white rounded hover:bg-indigo-500\">登录 / 注册</a>`;
+      }
+    }
+    renderUserSection();
+  </script>
+</body>
+</html>

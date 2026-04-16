@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>STAR.AI - Starwaves Music</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 text-gray-900">
+  <nav class="bg-white shadow-md">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+      <div class="flex items-center space-x-4">
+        <a href="index.html" class="text-xl font-bold text-indigo-600">Starwaves Music</a>
+        <a href="star-ai.html" class="text-indigo-600 font-semibold">STAR.AI</a>
+        
+        
+        <a href="top.html" class="text-gray-700 hover:text-indigo-600">STAR TOP榜</a>
+      </div>
+      <div id="user-section" class="flex items-center space-x-2"></div>
+    </div>
+  </nav>
+
+  <section class="max-w-4xl mx-auto py-12">
+    <h1 class="text-3xl font-bold mb-6">STAR.AI 创作工作台</h1>
+    <p class="mb-4">此页面为占位，后续将接入 Suno 生成 API。当前提供两种模式的表单结构。</p>
+
+    <!-- 简单创作 -->
+    <div class="bg-white rounded shadow p-6 mb-8">
+      <h2 class="text-xl font-semibold mb-4">简单创作</h2>
+      <form id="simple-form" class="space-y-4">
+        <input type="text" placeholder="一句提示（如：轻快的电子舞曲）" class="w-full border p-2 rounded" required />
+        <select class="w-full border p-2 rounded">
+          <option value="happy">快乐</option>
+          <option value="sad">悲伤</option>
+          <option value="energetic">充满活力</option>
+          <option value="calm">宁静</option>
+        </select>
+        <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-500">生成</button>
+      </form>
+      <div id="simple-result" class="mt-4 text-sm text-gray-600">（待实现）</div>
+    </div>
+
+    
+  </section>
+
+  <footer class="bg-gray-800 text-gray-200 py-4 mt-12">
+    <div class="max-w-7xl mx-auto text-center">© 2026 Starwaves Music</div>
+  </footer>
+
+  <script>
+    // Login status via backend session
+    async function renderUserSection(){
+      const userSection = document.getElementById('user-section');
+      try {
+        const resp = await fetch('/backend/status.php', {credentials: 'include'});
+        const data = await resp.json();
+        if (data.logged_in) {
+          userSection.innerHTML = `<span class=\"mr-2\">欢迎, ${data.username}</span><a href=\"/backend/logout.php\" class=\"px-2 py-1 bg-gray-600 rounded hover:bg-gray-500\">退出</a>`;
+        } else {
+          userSection.innerHTML = `<a href=\"/backend/login.php\" class=\"px-3 py-1 bg-indigo-600 text-white rounded hover:bg-indigo-500\">登录 / 注册</a>`;
+        }
+      } catch (e) {
+        console.error('获取登录状态失败', e);
+        userSection.innerHTML = `<a href=\"/backend/login.php\" class=\"px-3 py-1 bg-indigo-600 text-white rounded hover:bg-indigo-500\">登录 / 注册</a>`;
+      }
+    }
+    renderUserSection();
+  </script>
+</body>
+</html>

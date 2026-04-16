@@ -1,0 +1,57 @@
+# OS / editor noise
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# Environment / secrets
+.env
+.env.*
+*.pem
+*.key
+
+# Logs
+logs/
+*.log
+php-server.log
+
+# Runtime storage and sessions
+storage/
+backend/cache/
+backend/sessions/
+
+# Uploaded / generated media
+backend/uploads/
+backend/generated-covers/
+backend/lyrics/
+uploads/
+progress_exports/
+workspace_assets/
+
+# Local databases / state
+*.db
+*.sqlite
+*.sqlite3
+
+# Audio / archives / exports
+*.mp3
+*.wav
+*.flac
+*.m4a
+*.aac
+*.zip
+*.tar
+*.tar.gz
+
+# Python / Node build artifacts
+__pycache__/
+*.pyc
+node_modules/
+vendor/
+
+# Nested duplicate project snapshot
+starwaves_project/
+
+# Misc temp files
+tmp/
+archive/

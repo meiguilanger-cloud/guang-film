@@ -1,0 +1,11 @@
+version: "3.8"
+
+services:
+  app:
+    container_name: new_music_project_app
+    build: .
+    ports:
+      - "8080:80"
+    volumes:
+      - .:/var/www/html/new_music_project
+    restart: unless-stopped

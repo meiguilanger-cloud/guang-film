@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Starwaves Master</title>
+  <style>
+    :root {
+      --bg: #07111f;
+      --panel: rgba(10, 24, 43, 0.78);
+      --panel-strong: rgba(14, 33, 58, 0.96);
+      --text: #f4f7fb;
+      --muted: #9ab0c9;
+      --line: rgba(154, 176, 201, 0.18);
+      --aqua: #75f0d6;
+      --gold: #f7c66b;
+      --blue: #6fb8ff;
+      --shadow: 0 24px 80px rgba(0, 0, 0, 0.38);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Georgia, "Times New Roman", serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(111, 184, 255, 0.18), transparent 30%),
+        radial-gradient(circle at 80% 20%, rgba(247, 198, 107, 0.18), transparent 24%),
+        radial-gradient(circle at bottom center, rgba(117, 240, 214, 0.12), transparent 28%),
+        linear-gradient(135deg, #040a12 0%, #07111f 45%, #0d1d2f 100%);
+      overflow-x: hidden;
+    }
+
+    body::before,
+    body::after {
+      content: "";
+      position: fixed;
+      inset: auto;
+      pointer-events: none;
+      border-radius: 999px;
+      filter: blur(10px);
+      opacity: 0.45;
+    }
+
+    body::before {
+      width: 240px;
+      height: 240px;
+      top: 8%;
+      right: -60px;
+      background: rgba(247, 198, 107, 0.16);
+    }
+
+    body::after {
+      width: 320px;
+      height: 320px;
+      bottom: -120px;
+      left: -70px;
+      background: rgba(111, 184, 255, 0.14);
+    }
+
+    .shell {
+      width: min(1180px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 32px 0 56px;
+    }
+
+    .hero {
+      position: relative;
+      padding: 28px;
+      border: 1px solid var(--line);
+      border-radius: 28px;
+      background: linear-gradient(180deg, rgba(12, 29, 50, 0.94), rgba(8, 18, 31, 0.85));
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .hero::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(120deg, transparent 0%, rgba(255,255,255,0.06) 22%, transparent 38%),
+        repeating-linear-gradient(90deg, rgba(255,255,255,0.02) 0 1px, transparent 1px 64px),
+        repeating-linear-gradient(0deg, rgba(255,255,255,0.02) 0 1px, transparent 1px 64px);
+      opacity: 0.7;
+      pointer-events: none;
+    }
+
+    .hero-inner,
+    .grid,
+    .footer {
+      position: relative;
+      z-index: 1;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 7px 12px;
+      border: 1px solid rgba(117, 240, 214, 0.25);
+      border-radius: 999px;
+      color: var(--aqua);
+      font-size: 13px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      background: rgba(117, 240, 214, 0.08);
+    }
+
+    h1 {
+      margin: 18px 0 16px;
+      max-width: 9.5em;
+      font-size: clamp(44px, 8vw, 88px);
+      line-height: 0.92;
+      letter-spacing: -0.04em;
+      text-transform: uppercase;
+    }
+
+    .lead {
+      max-width: 680px;
+      margin: 0;
+      color: var(--muted);
+      font-size: 18px;
+      line-height: 1.75;
+    }
+
+    .hero-meta {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
+      margin-top: 28px;
+    }
+
+    .stat {
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      background: rgba(255,255,255,0.03);
+      backdrop-filter: blur(10px);
+    }
+
+    .stat strong {
+      display: block;
+      font-size: 28px;
+      color: var(--text);
+    }
+
+    .stat span {
+      display: block;
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 14px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1.4fr 1fr;
+      gap: 18px;
+      margin-top: 18px;
+    }
+
+    .panel {
+      padding: 24px;
+      border-radius: 24px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(14px);
+    }
+
+    .panel h2,
+    .panel h3,
+    .panel h4,
+    .panel p,
+    .panel ul { margin-top: 0; }
+
+    .panel h2 {
+      font-size: 28px;
+      margin-bottom: 14px;
+    }
+
+    .panel p,
+    .panel li {
+      color: var(--muted);
+      line-height: 1.7;
+      font-size: 16px;
+    }
+
+    .signal-list,
+    .feature-list {
+      list-style: none;
+      padding: 0;
+      margin: 18px 0 0;
+      display: grid;
+      gap: 12px;
+    }
+
+    .signal-list li,
+    .feature-list li {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      padding: 14px 16px;
+      border-radius: 18px;
+      border: 1px solid rgba(255,255,255,0.06);
+      background: rgba(255,255,255,0.03);
+    }
+
+    .signal-list b,
+    .feature-list b {
+      color: var(--text);
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .dot {
+      width: 12px;
+      height: 12px;
+      margin-top: 6px;
+      flex: 0 0 12px;
+      border-radius: 50%;
+      background: linear-gradient(180deg, var(--gold), #d9982f);
+      box-shadow: 0 0 0 5px rgba(247, 198, 107, 0.12);
+    }
+
+    .mini-card-wrap {
+      display: grid;
+      gap: 16px;
+    }
+
+    .mini-card {
+      padding: 18px;
+      border-radius: 20px;
+      border: 1px solid var(--line);
+      background: var(--panel-strong);
+    }
+
+    .mini-card small {
+      display: block;
+      color: var(--gold);
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+
+    .mini-card strong {
+      display: block;
+      font-size: 24px;
+      margin-bottom: 10px;
+    }
+
+    .cta {
+      margin-top: 18px;
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 168px;
+      padding: 14px 18px;
+      border-radius: 999px;
+      text-decoration: none;
+      font-size: 15px;
+      letter-spacing: 0.04em;
+      transition: transform 0.25s ease, background 0.25s ease, border-color 0.25s ease;
+    }
+
+    .btn:hover { transform: translateY(-2px); }
+
+    .btn-primary {
+      color: #07111f;
+      background: linear-gradient(135deg, var(--aqua), #d9fff5);
+    }
+
+    .btn-secondary {
+      color: var(--text);
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.04);
+    }
+
+    .footer {
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+      margin-top: 18px;
+      padding: 18px 6px 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .reveal {
+      opacity: 0;
+      transform: translateY(18px);
+      animation: rise 0.8s ease forwards;
+    }
+
+    .delay-1 { animation-delay: 0.12s; }
+    .delay-2 { animation-delay: 0.24s; }
+    .delay-3 { animation-delay: 0.36s; }
+
+    @keyframes rise {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @media (max-width: 900px) {
+      .hero-meta,
+      .grid { grid-template-columns: 1fr; }
+
+      h1 { max-width: none; }
+
+      .footer {
+        flex-direction: column;
+        padding-bottom: 18px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="hero reveal">
+      <div class="hero-inner">
+        <div class="eyebrow">Starwaves Master Signal</div>
+        <h1>Starwaves<br>Master</h1>
+        <p class="lead">
+          A dedicated master page created alongside the existing site without touching the live experience.
+          This page acts like a high-command visual layer: calm, cinematic, and ready to expand into a control page,
+          premium campaign landing, or founder-facing dashboard.
+        </p>
+        <div class="hero-meta">
+          <div class="stat reveal delay-1">
+            <strong>01</strong>
+            <span>Isolated Page</span>
+          </div>
+          <div class="stat reveal delay-2">
+            <strong>100%</strong>
+            <span>Existing Site Preserved</span>
+          </div>
+          <div class="stat reveal delay-3">
+            <strong>Ready</strong>
+            <span>For Next Build Phase</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="grid">
+      <article class="panel reveal delay-1">
+        <h2>Master Layer</h2>
+        <p>
+          This page lives in its own directory so the current Starwaves website stays untouched.
+          You can later evolve it into a secret admin landing page, an investor presentation shell,
+          a premium brand surface, or a launch page for your flagship product.
+        </p>
+        <ul class="signal-list">
+          <li>
+            <span class="dot"></span>
+            <div>
+              <b>Independent deployment surface</b>
+              Built as a clean sibling page, not a rewrite of the main site.
+            </div>
+          </li>
+          <li>
+            <span class="dot"></span>
+            <div>
+              <b>Cinematic brand direction</b>
+              Deep blue atmosphere, warm gold highlights, and a controlled premium tone.
+            </div>
+          </li>
+          <li>
+            <span class="dot"></span>
+            <div>
+              <b>Expandable structure</b>
+              Easy to turn into a dashboard, media gateway, product intro, or founder console.
+            </div>
+          </li>
+        </ul>
+      </article>
+
+      <aside class="mini-card-wrap">
+        <section class="mini-card reveal delay-2">
+          <small>Build Intent</small>
+          <strong>Safe New Entry Point</strong>
+          <p>Made under `starwaves-master/` to avoid changing the existing homepage and PHP flow.</p>
+        </section>
+        <section class="mini-card reveal delay-3">
+          <small>Next Upgrade</small>
+          <strong>Connect Real Content</strong>
+          <p>Add music releases, navigation, AI tools, master controls, or your own visual assets next.</p>
+        </section>
+      </aside>
+    </section>
+
+    <section class="panel reveal delay-2">
+      <h2>Possible Directions</h2>
+      <ul class="feature-list">
+        <li>
+          <span class="dot" style="background: linear-gradient(180deg, var(--aqua), #38b9a0);"></span>
+          <div><b>Brand Command Page</b> Showcase Starwaves vision, music identity, and flagship services in one premium screen.</div>
+        </li>
+        <li>
+          <span class="dot" style="background: linear-gradient(180deg, var(--blue), #356dff);"></span>
+          <div><b>Artist Control Hub</b> Turn this into an internal dashboard for releases, tracks, covers, links, and marketing actions.</div>
+        </li>
+        <li>
+          <span class="dot"></span>
+          <div><b>Private Master Portal</b> Use it as a hidden entry page for selected partners, ops views, or premium client access.</div>
+        </li>
+      </ul>
+      <div class="cta">
+        <a class="btn btn-primary" href="../index.php">Return to Main Site</a>
+        <a class="btn btn-secondary" href="#">Master Page Live</a>
+      </div>
+    </section>
+
+    <footer class="footer reveal delay-3">
+      <span>Starwaves Master / Dedicated standalone page</span>
+      <span>Built without modifying the existing Starwaves website</span>
+    </footer>
+  </main>
+</body>
+</html>

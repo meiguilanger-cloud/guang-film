@@ -1,0 +1,41 @@
+<svg width="960" height="320" viewBox="0 0 960 320" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="40" y1="40" x2="260" y2="260" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0B132B"/>
+      <stop offset="1" stop-color="#123C69"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="58" y1="64" x2="242" y2="236" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F9C74F"/>
+      <stop offset="0.55" stop-color="#21C6B8"/>
+      <stop offset="1" stop-color="#4D96FF"/>
+    </linearGradient>
+    <linearGradient id="wave" x1="300" y1="128" x2="902" y2="210" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#1C2541"/>
+      <stop offset="1" stop-color="#3A506B"/>
+    </linearGradient>
+    <filter id="glow" x="0" y="0" width="320" height="320" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feGaussianBlur stdDeviation="10" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <rect x="24" y="24" width="272" height="272" rx="68" fill="url(#bg)"/>
+
+  <g filter="url(#glow)">
+    <path d="M160 56L174.8 101.5H222.6L183.9 129.7L198.7 175.2L160 147L121.3 175.2L136.1 129.7L97.4 101.5H145.2L160 56Z" fill="url(#accent)"/>
+  </g>
+
+  <path d="M72 194C98 170 125 158 149 158C180 158 193 177 221 177C235 177 250 172 264 164" stroke="url(#accent)" stroke-width="14" stroke-linecap="round"/>
+  <path d="M60 222C90 195 118 182 148 182C178 182 194 202 222 202C242 202 258 194 280 178" stroke="url(#accent)" stroke-opacity="0.82" stroke-width="12" stroke-linecap="round"/>
+  <path d="M76 248C101 229 126 219 150 219C177 219 196 236 220 236C236 236 251 231 268 220" stroke="url(#accent)" stroke-opacity="0.58" stroke-width="10" stroke-linecap="round"/>
+
+  <path d="M342 208C381 175 420 158 460 158C510 158 529 194 572 194C603 194 628 180 655 156C684 131 714 112 751 112C792 112 816 137 848 137C871 137 894 126 918 108" stroke="url(#wave)" stroke-width="18" stroke-linecap="round"/>
+  <path d="M340 234C380 203 421 188 460 188C500 188 525 213 567 213C595 213 620 201 646 182C677 160 711 144 750 144C788 144 815 164 847 164C869 164 891 156 910 146" stroke="#21C6B8" stroke-width="6" stroke-linecap="round" opacity="0.9"/>
+
+  <text x="338" y="126" fill="#0B132B" font-size="58" font-family="'Trebuchet MS', 'Segoe UI', sans-serif" font-weight="800" letter-spacing="3">STARWAVES</text>
+  <text x="340" y="180" fill="#1C2541" font-size="34" font-family="'Noto Sans SC', 'Microsoft YaHei', sans-serif" font-weight="700" letter-spacing="2">星浪音乐</text>
+  <text x="340" y="226" fill="#5C677D" font-size="20" font-family="'Segoe UI', sans-serif" font-weight="600" letter-spacing="4">CREATE • UPLOAD • DISCOVER</text>
+</svg>

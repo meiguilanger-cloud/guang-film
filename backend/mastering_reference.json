@@ -1,0 +1,17 @@
+{
+  "name": "爱的海洋_master_mmm",
+  "reference_file": "爱的海洋_master_mmm---15c5adec-5378-41a5-9ba9-28b88bf5ab90.mp3",
+  "measured": {
+    "integrated_lufs": -8.93,
+    "true_peak_dbtp": 1.08,
+    "lra": 8.8,
+    "duration_seconds": 307.069375,
+    "bit_rate": 320000
+  },
+  "target": {
+    "integrated_lufs": -9.0,
+    "true_peak_dbtp": -1.1,
+    "lra": 8.8
+  },
+  "notes": "Use this as the default Starwaves auto-mastering reference. Match the loudness feel of the reference song but keep true peak safer for streaming transcodes."
+}

@@ -1,0 +1,229 @@
+<?php
+require_once __DIR__ . '/utils.php';
+require_once __DIR__ . '/config.php';
+require_once __DIR__ . '/db.php';
+
+header('Content-Type: application/json; charset=utf-8');
+
+function masterJson(int $status, array $payload): void {
+    http_response_code($status);
+    echo json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    exit;
+}
+
+function ensureMasteringJobsTable(PDO $pdo): void {
+    $pdo->exec(
+        "CREATE TABLE IF NOT EXISTS mastering_jobs (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            song_id INTEGER NOT NULL,
+            mastering_type TEXT NOT NULL DEFAULT 'software',
+            style TEXT DEFAULT 'balanced',
+            target_lufs REAL DEFAULT -10,
+            status TEXT NOT NULL DEFAULT 'queued',
+            input_file TEXT,
+            output_file TEXT,
+            preview_file TEXT,
+            notes TEXT,
+            error_message TEXT,
+            created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            started_at TEXT,
+            completed_at TEXT
+        )"
+    );
+}
+
+function readJsonInput(): array {
+    $raw = file_get_contents('php://input');
+    if (!is_string($raw) || trim($raw) === '') {
+        return [];
+    }
+    $decoded = json_decode($raw, true);
+    return is_array($decoded) ? $decoded : [];
+}
+
+function masteringSlug(string $name): string {
+    $name = pathinfo($name, PATHINFO_FILENAME);
+    $name = preg_replace('/[^A-Za-z0-9._-]+/', '-', $name) ?? 'song';
+    $name = trim($name, '-._');
+    return $name !== '' ? $name : 'song';
+}
+
+function ensureMasteringStorage(): string {
+    $dir = dirname(__DIR__) . '/storage/mastering_inbox';
+    if (!is_dir($dir)) {
+        mkdir($dir, 0755, true);
+    }
+    return $dir;
+}
+
+function downloadSongToLocal(string $source, string $songTitle): array {
+    if ($source === '') {
+        throw new RuntimeException('歌曲文件地址为空。');
+    }
+
+    $inboxDir = ensureMasteringStorage();
+    $extension = strtolower(pathinfo(parse_url($source, PHP_URL_PATH) ?: '', PATHINFO_EXTENSION)) ?: 'mp3';
+    $jobToken = date('Ymd-His') . '-' . bin2hex(random_bytes(3));
+    $filename = masteringSlug($songTitle) . '-' . $jobToken . '.' . $extension;
+    $targetPath = $inboxDir . '/' . $filename;
+
+    $context = stream_context_create([
+        'http' => [
+            'timeout' => 60,
+            'follow_location' => 1,
+            'user_agent' => 'StarwavesMaster/1.0',
+        ],
+        'https' => [
+            'timeout' => 60,
+            'follow_location' => 1,
+            'user_agent' => 'StarwavesMaster/1.0',
+        ],
+    ]);
+
+    $data = @file_get_contents($source, false, $context);
+    if ($data === false) {
+        throw new RuntimeException('远程音频下载失败，请稍后再试。');
+    }
+    if (file_put_contents($targetPath, $data) === false) {
+        throw new RuntimeException('远程音频已拿到，但写入服务器本地失败。');
+    }
+
+    return [
+        'path' => $targetPath,
+        'name' => $filename,
+    ];
+}
+
+$action = $_GET['action'] ?? 'create';
+$pdo = getPdo();
+ensureMasteringJobsTable($pdo);
+
+if ($action === 'list') {
+    if (empty($_SESSION['user_id'])) {
+        masterJson(200, ['ok' => false, 'code' => 'LOGIN_REQUIRED', 'error' => '请先登录后再查看任务']);
+    }
+
+    $stmt = $pdo->prepare(
+        'SELECT mj.id, mj.song_id, mj.mastering_type, mj.status, mj.style, mj.target_lufs, mj.created_at, mj.output_file, mj.preview_file,
+                s.title AS song_title
+         FROM mastering_jobs mj
+         LEFT JOIN songs s ON s.id = mj.song_id
+         WHERE mj.user_id = :user_id
+         ORDER BY mj.created_at DESC
+         LIMIT 12'
+    );
+    $stmt->execute([':user_id' => (int) $_SESSION['user_id']]);
+    masterJson(200, ['ok' => true, 'jobs' => $stmt->fetchAll(PDO::FETCH_ASSOC)]);
+}
+
+if ($action === 'status') {
+    if (empty($_SESSION['user_id'])) {
+        masterJson(200, ['ok' => false, 'code' => 'LOGIN_REQUIRED', 'error' => '请先登录后再查看任务']);
+    }
+    $jobId = (int) ($_GET['id'] ?? 0);
+    if ($jobId <= 0) {
+        masterJson(422, ['ok' => false, 'error' => '缺少任务 id']);
+    }
+    $stmt = $pdo->prepare(
+        'SELECT mj.*, s.title AS song_title
+         FROM mastering_jobs mj
+         LEFT JOIN songs s ON s.id = mj.song_id
+         WHERE mj.id = :id AND mj.user_id = :user_id
+         LIMIT 1'
+    );
+    $stmt->execute([':id' => $jobId, ':user_id' => (int) $_SESSION['user_id']]);
+    $job = $stmt->fetch(PDO::FETCH_ASSOC);
+    if (!$job) {
+        masterJson(404, ['ok' => false, 'error' => '任务不存在']);
+    }
+    masterJson(200, ['ok' => true, 'job' => $job]);
+}
+
+if ($_SERVER['REQUEST_METHOD'] != 'POST') {
+    masterJson(405, ['ok' => false, 'error' => '仅支持 POST 请求']);
+}
+
+if (empty($_SESSION['user_id'])) {
+    masterJson(200, ['ok' => false, 'code' => 'LOGIN_REQUIRED', 'error' => '请先登录后再提交真实母带任务']);
+}
+
+$input = readJsonInput();
+$songId = (int) ($input['song_id'] ?? 0);
+$masteringType = (string) ($input['mastering_type'] ?? 'software');
+$style = trim((string) ($input['style'] ?? 'balanced')) ?: 'balanced';
+$targetLufs = (float) ($input['target_lufs'] ?? -10);
+
+if ($songId <= 0) {
+    masterJson(422, ['ok' => false, 'error' => '缺少 song_id']);
+}
+if (!in_array($masteringType, ['software', 'hardware'], true)) {
+    masterJson(422, ['ok' => false, 'error' => '不支持的母带类型']);
+}
+
+$songStmt = $pdo->prepare('SELECT * FROM songs WHERE id = :id AND user_id = :user_id LIMIT 1');
+$songStmt->execute([':id' => $songId, ':user_id' => (int) $_SESSION['user_id']]);
+$song = $songStmt->fetch(PDO::FETCH_ASSOC);
+if (!$song) {
+    masterJson(404, ['ok' => false, 'error' => '歌曲不存在或无权限操作']);
+}
+
+$status = $masteringType === 'hardware' ? 'awaiting_manual' : 'queued';
+$notes = $masteringType === 'hardware'
+    ? '硬件母带请求已进入人工派单占位，后续可接工程师分配与通知。'
+    : '软件母带任务已创建，正在准备自动处理输入文件。';
+$inputFile = (string) ($song['file_path'] ?? '');
+$errorMessage = null;
+
+if ($masteringType === 'software') {
+    try {
+        $download = downloadSongToLocal($inputFile, (string) ($song['title'] ?? 'song'));
+        $inputFile = $download['path'];
+        $status = 'input_ready';
+        $notes = '软件母带任务已创建，远程音频已下载到服务器本地，下一步可接本地/远程母带引擎。';
+    } catch (Throwable $e) {
+        $status = 'download_failed';
+        $errorMessage = $e->getMessage();
+        $notes = '软件母带任务已创建，但远程音频下载失败。';
+        logMessage('Mastering input download failed: song_id=' . $songId . ', user_id=' . (int) $_SESSION['user_id'] . ', error=' . $e->getMessage());
+    }
+}
+
+$insert = $pdo->prepare(
+    'INSERT INTO mastering_jobs (user_id, song_id, mastering_type, style, target_lufs, status, input_file, preview_file, notes, error_message, created_at, updated_at)
+     VALUES (:user_id, :song_id, :mastering_type, :style, :target_lufs, :status, :input_file, :preview_file, :notes, :error_message, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)'
+);
+$insert->execute([
+    ':user_id' => (int) $_SESSION['user_id'],
+    ':song_id' => $songId,
+    ':mastering_type' => $masteringType,
+    ':style' => $style,
+    ':target_lufs' => $targetLufs,
+    ':status' => $status,
+    ':input_file' => $inputFile,
+    ':preview_file' => (string) ($song['file_path'] ?? ''),
+    ':notes' => $notes,
+    ':error_message' => $errorMessage,
+]);
+
+$jobId = (int) $pdo->lastInsertId();
+logMessage('Mastering job created: job_id=' . $jobId . ', song_id=' . $songId . ', type=' . $masteringType . ', user_id=' . (int) $_SESSION['user_id'] . ', status=' . $status);
+
+masterJson(200, [
+    'ok' => true,
+    'job' => [
+        'id' => $jobId,
+        'song_id' => $songId,
+        'song_title' => $song['title'],
+        'mastering_type' => $masteringType,
+        'style' => $style,
+        'target_lufs' => $targetLufs,
+        'status' => $status,
+        'notes' => $notes,
+        'input_file' => $inputFile,
+        'preview_file' => (string) ($song['file_path'] ?? ''),
+        'error_message' => $errorMessage,
+    ],
+]);
+?>
