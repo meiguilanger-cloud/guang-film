@@ -34,7 +34,7 @@ $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
 $stmt->execute();
 $songsPage = $stmt->fetchAll(PDO::FETCH_ASSOC);
 $totalPages = max(1, (int) ceil($totalSongs / $perPage));
-$avatarSrc = !empty($user['avatar_path']) ? $user['avatar_path'] : '../images/starwaves-logo.svg';
+$avatarSrc = resolveAvatarUrl(!empty($user['avatar_path']) ? $user['avatar_path'] : '../images/starwaves-logo.svg');
 $userAccountCode = str_pad((string) $userId, 7, '0', STR_PAD_LEFT);
 $displayName = trim((string) ($user['full_name'] ?: $user['username']));
 $displayBio = trim((string) ($user['bio'] ?: '欢迎来到你的音乐后台。'));
@@ -463,7 +463,7 @@ $displayBio = trim((string) ($user['bio'] ?: '欢迎来到你的音乐后台。'
 <div class="backend-shell">
     <div class="backend-topbar">
         <div class="backend-brand">
-            <img src="../images/starwaves-logo.svg" alt="logo">
+            <img src="<?php echo e(resolvePublicAssetUrl('images/starwaves-logo.svg')); ?>" alt="logo">
             <div>
                 <strong>音乐后台</strong>
                 <span>上传、管理、分发你的歌曲内容</span>
@@ -736,7 +736,7 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 });
 </script>
-<script src="../js/global-player.js"></script>
-<script src="/js/xingzai-widget.js" data-api="/backend/xingzai_chat.php" data-avatar="/images/xingzai-avatar.jpg"></script>
+<script src="<?php echo e(resolvePublicAssetUrl('js/global-player.js')); ?>"></script>
+<script src="<?php echo e(resolvePublicAssetUrl('js/xingzai-widget.js')); ?>" data-api="/backend/xingzai_chat.php" data-avatar="<?php echo e(resolvePublicAssetUrl('images/xingzai-avatar.jpg')); ?>"></script>
 </body>
 </html>

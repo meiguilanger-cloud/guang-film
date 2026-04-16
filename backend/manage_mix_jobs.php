@@ -68,7 +68,7 @@ $jobs = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
 <div class="backend-shell">
     <div class="backend-topbar">
         <div class="backend-brand">
-            <img src="../images/starwaves-logo.svg" alt="logo">
+            <img src="<?php echo e(resolvePublicAssetUrl('images/starwaves-logo.svg')); ?>" alt="logo">
             <div>
                 <strong>混音任务池</strong>
                 <span>管理软件混音和硬件混音任务</span>
@@ -136,6 +136,6 @@ $jobs = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
         </div>
     </div>
 </div>
-<script src="/js/xingzai-widget.js" data-api="/backend/xingzai_chat.php" data-avatar="/images/xingzai-avatar.jpg"></script>
+<script src="<?php echo e(resolvePublicAssetUrl('js/xingzai-widget.js')); ?>" data-api="/backend/xingzai_chat.php" data-avatar="<?php echo e(resolvePublicAssetUrl('images/xingzai-avatar.jpg')); ?>"></script>
 </body>
 </html>
