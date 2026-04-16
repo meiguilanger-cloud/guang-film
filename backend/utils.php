@@ -1,6 +1,8 @@
 <?php
 // utils.php - 公共帮助函数
 
+require_once __DIR__ . '/config.php';
+
 $sessionDir = __DIR__ . '/../storage/sessions';
 if (!is_dir($sessionDir)) {
     mkdir($sessionDir, 0755, true);
@@ -120,8 +122,29 @@ function e(string $s): string {
     return htmlspecialchars($s, ENT_QUOTES, 'UTF-8');
 }
 
-function netdiskSongProxyUrl(int $songId, string $context = 'backend'): string {
-    return ($context === 'frontend' ? 'backend/' : '') . 'netdisk_stream.php?id=' . $songId;
+function siteAssetUrl(string $path): string {
+    return staticUrl($path);
+}
+
+function mediaPathUrl(string $path): string {
+    return mediaUrl($path);
+}
+
+function netdiskSongProxyUrl(int $songId, string $context = 'backend', string $variant = 'original'): string {
+    $query = ['id' => $songId];
+    if ($variant !== 'original') {
+        $query['variant'] = $variant;
+    }
+    $path = 'backend/netdisk_stream.php?' . http_build_query($query);
+    return $context === 'absolute' ? mediaUrl($path) : '/' . ltrim($path, '/');
+}
+
+function normalizeProjectRelativePath(string $path): string {
+    $path = ltrim($path, '/');
+    if (str_starts_with($path, 'starwaves_project/')) {
+        return substr($path, strlen('starwaves_project/'));
+    }
+    return $path;
 }
 
 function resolveStoredAudioPath(?string $rawPath, string $context = 'backend'): string {
@@ -130,18 +153,21 @@ function resolveStoredAudioPath(?string $rawPath, string $context = 'backend'): 
         return '';
     }
 
-    if (preg_match('#^https?://#i', $rawPath) || str_starts_with($rawPath, '/backend/')) {
+    if (preg_match('#^https?://#i', $rawPath)) {
         return $rawPath;
     }
 
-    if (preg_match('#^(?:\.\./)?backend/(?:netdisk_stream|netdisk_mix_stream)\.php\?#', $rawPath)) {
-        return $rawPath;
+    $normalized = normalizeProjectRelativePath($rawPath);
+    if (str_starts_with($normalized, 'backend/netdisk_stream.php') || str_starts_with($normalized, 'backend/netdisk_mix_stream.php')) {
+        return $context === 'absolute' ? mediaUrl($normalized) : '/' . $normalized;
     }
 
-    if ($context === 'frontend') {
-        return 'backend/uploads/' . rawurlencode(ltrim($rawPath, '/'));
+    if (str_starts_with($normalized, 'backend/')) {
+        return $context === 'absolute' ? siteUrl($normalized) : '/' . $normalized;
     }
-    return 'uploads/' . ltrim($rawPath, '/');
+
+    $uploadsPath = 'backend/uploads/' . rawurlencode(basename($normalized));
+    return $context === 'absolute' ? siteUrl($uploadsPath) : '/' . $uploadsPath;
 }
 
 function resolveSongAudioUrl(array $song, string $context = 'backend'): string {
@@ -161,14 +187,12 @@ function absoluteAudioUrl(string $rawUrl): string {
     if (preg_match('#^https?://#i', $rawUrl)) {
         return $rawUrl;
     }
-    if (!function_exists('absoluteUrl')) {
-        return $rawUrl;
-    }
-    return absoluteUrl($rawUrl);
+    return siteUrl($rawUrl);
 }
 
-function mixJobProxyUrl(int $jobId, string $variant = 'preview'): string {
-    return '/backend/netdisk_mix_stream.php?id=' . $jobId . '&variant=' . $variant;
+function mixJobProxyUrl(int $jobId, string $variant = 'preview', string $context = 'absolute'): string {
+    $path = 'backend/netdisk_mix_stream.php?id=' . $jobId . '&variant=' . rawurlencode($variant);
+    return $context === 'absolute' ? mediaUrl($path) : '/' . $path;
 }
 
 function formatAudioDuration(?float $seconds): string {
