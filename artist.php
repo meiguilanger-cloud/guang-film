@@ -33,10 +33,10 @@ if ($userId > 0) {
     <title>音乐人主页 | 星浪音乐</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <link href="css/bootstrap.css" rel="stylesheet" type="text/css" media="all" />
-    <link href="css/style.css" rel="stylesheet" type="text/css" media="all" />
-    <link href="css/starwaves.css" rel="stylesheet" type="text/css" media="all" />
-    <link href="css/font-awesome.css" rel="stylesheet">
+    <link href="<?php echo htmlspecialchars(siteAssetUrl('css/bootstrap.css')); ?>" rel="stylesheet" type="text/css" media="all" />
+    <link href="<?php echo htmlspecialchars(siteAssetUrl('css/style.css')); ?>" rel="stylesheet" type="text/css" media="all" />
+    <link href="<?php echo htmlspecialchars(siteAssetUrl('css/starwaves.css')); ?>" rel="stylesheet" type="text/css" media="all" />
+    <link href="<?php echo htmlspecialchars(siteAssetUrl('css/font-awesome.css')); ?>" rel="stylesheet">
 </head>
 <body>
     <div class="main_section_agile site-shell" id="home">
@@ -45,7 +45,7 @@ if ($userId > 0) {
                 <div class="navbar-header navbar-left">
                     <h1>
                         <a class="navbar-brand starwaves-brand" href="index.php">
-                            <img src="images/starwaves-logo.svg" alt="星浪音乐" class="brand-mark" />
+                            <img src="<?php echo htmlspecialchars(siteAssetUrl('images/starwaves-logo.svg')); ?>" alt="星浪音乐" class="brand-mark" />
                             <span class="brand-text-wrap"><strong>星浪音乐</strong><em>Starwaves</em></span>
                         </a>
                     </h1>
@@ -72,7 +72,7 @@ if ($userId > 0) {
             <?php elseif (!$artist): ?>
                 <div class="songs-empty"><h4>没有找到这个音乐人</h4><p>可能链接不对，或者该用户还没有公开资料。</p><a class="btn btn-primary btn-lg hero-primary" href="songs.php">返回作品列表</a></div>
             <?php else: ?>
-                <?php $avatar = !empty($artist['avatar_path']) ? 'backend/' . ltrim($artist['avatar_path'], '/') : 'images/starwaves-logo.svg'; ?>
+                <?php $avatar = resolveAvatarUrl(!empty($artist['avatar_path']) ? 'backend/' . ltrim($artist['avatar_path'], '/') : 'images/starwaves-logo.svg'); ?>
                 <div class="song-detail-card">
                     <span class="backend-kicker">Artist</span>
                     <div style="display:flex;align-items:center;gap:18px;flex-wrap:wrap;">
@@ -129,7 +129,7 @@ if ($userId > 0) {
             <?php endif; ?>
         </div>
     </div>
-<script src="js/global-player.js"></script>
-<script src="/js/xingzai-widget.js" data-api="/backend/xingzai_chat.php" data-avatar="/images/xingzai-avatar.jpg"></script>
+<script src="<?php echo htmlspecialchars(siteAssetUrl('js/global-player.js')); ?>"></script>
+<script src="<?php echo htmlspecialchars(siteAssetUrl('js/xingzai-widget.js')); ?>" data-api="/backend/xingzai_chat.php" data-avatar="<?php echo htmlspecialchars(siteAssetUrl('images/xingzai-avatar.jpg')); ?>"></script>
 </body>
 </html>

@@ -27,10 +27,10 @@ try {
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <meta name="description" content="浏览星浪音乐已上传作品，在线播放并查看歌曲信息。" />
-    <link href="css/bootstrap.css" rel="stylesheet" type="text/css" media="all" />
-    <link href="css/style.css" rel="stylesheet" type="text/css" media="all" />
-    <link href="css/starwaves.css" rel="stylesheet" type="text/css" media="all" />
-    <link href="css/font-awesome.css" rel="stylesheet">
+    <link href="<?php echo htmlspecialchars(siteAssetUrl('css/bootstrap.css')); ?>" rel="stylesheet" type="text/css" media="all" />
+    <link href="<?php echo htmlspecialchars(siteAssetUrl('css/style.css')); ?>" rel="stylesheet" type="text/css" media="all" />
+    <link href="<?php echo htmlspecialchars(siteAssetUrl('css/starwaves.css')); ?>" rel="stylesheet" type="text/css" media="all" />
+    <link href="<?php echo htmlspecialchars(siteAssetUrl('css/font-awesome.css')); ?>" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css?family=Raleway:400,600,700,800" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,600,700" rel="stylesheet">
 </head>
@@ -47,7 +47,7 @@ try {
                     </button>
                     <h1>
                         <a class="navbar-brand starwaves-brand" href="index.php">
-                            <img src="images/starwaves-logo.svg" alt="星浪音乐" class="brand-mark" />
+                            <img src="<?php echo htmlspecialchars(siteAssetUrl('images/starwaves-logo.svg')); ?>" alt="星浪音乐" class="brand-mark" />
                             <span class="brand-text-wrap"><strong>星浪音乐</strong><em>Starwaves</em></span>
                         </a>
                     </h1>
@@ -95,7 +95,7 @@ try {
                 <div class="songs-grid">
                     <?php foreach ($songs as $song): ?>
                         <?php
-                            $avatar = !empty($song['avatar_path']) ? 'backend/' . ltrim($song['avatar_path'], '/') : 'images/starwaves-logo.svg';
+                            $avatar = resolveAvatarUrl(!empty($song['avatar_path']) ? 'backend/' . ltrim($song['avatar_path'], '/') : 'images/starwaves-logo.svg');
                             $previewUrl = !empty($song['mastered_preview_path'])
                                 ? (string) $song['mastered_preview_path']
                                 : resolveSongAudioUrl($song, 'frontend');
@@ -147,9 +147,9 @@ try {
         </div>
     </div>
 
-    <script type="text/javascript" src="js/jquery-2.1.4.min.js"></script>
-    <script type="text/javascript" src="js/bootstrap-3.1.1.min.js"></script>
-<script src="js/global-player.js"></script>
-<script src="/js/xingzai-widget.js" data-api="/backend/xingzai_chat.php" data-avatar="/images/xingzai-avatar.jpg"></script>
+    <script type="text/javascript" src="<?php echo htmlspecialchars(siteAssetUrl('js/jquery-2.1.4.min.js')); ?>"></script>
+    <script type="text/javascript" src="<?php echo htmlspecialchars(siteAssetUrl('js/bootstrap-3.1.1.min.js')); ?>"></script>
+<script src="<?php echo htmlspecialchars(siteAssetUrl('js/global-player.js')); ?>"></script>
+<script src="<?php echo htmlspecialchars(siteAssetUrl('js/xingzai-widget.js')); ?>" data-api="/backend/xingzai_chat.php" data-avatar="<?php echo htmlspecialchars(siteAssetUrl('images/xingzai-avatar.jpg')); ?>"></script>
 </body>
 </html>
