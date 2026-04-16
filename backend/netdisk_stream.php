@@ -5,7 +5,9 @@ require_once __DIR__ . '/utils.php';
 const NETDISK_DLINK_TTL_SECONDS = 7 * 3600;
 const NETDISK_DLINK_REFRESH_BUFFER_SECONDS = 3600;
 const NETDISK_VALIDATE_TIMEOUT_SECONDS = 8;
-const NETDISK_LOCAL_CACHE_TTL_SECONDS = 1800;
+const NETDISK_LOCAL_CACHE_TTL_SECONDS = 600;
+const NETDISK_LOCAL_CACHE_MAX_FILES = 20;
+const NETDISK_LOCAL_CACHE_MAX_BYTES = 314572800;
 
 function fail(int $code, string $message): void {
     http_response_code($code);
@@ -138,6 +140,40 @@ function streamLocalFile(string $path, string $contentType): void {
     exit;
 }
 
+function cleanLocalCacheDir(): void {
+    $dir = localCacheDir();
+    $files = glob($dir . '/*') ?: [];
+    if (!$files) {
+        return;
+    }
+
+    $entries = [];
+    $totalBytes = 0;
+    foreach ($files as $file) {
+        if (!is_file($file)) {
+            continue;
+        }
+        $mtime = filemtime($file) ?: 0;
+        $size = filesize($file) ?: 0;
+        if ($mtime < (time() - NETDISK_LOCAL_CACHE_TTL_SECONDS)) {
+            @unlink($file);
+            continue;
+        }
+        $entries[] = ['path' => $file, 'mtime' => $mtime, 'size' => $size];
+        $totalBytes += $size;
+    }
+
+    usort($entries, static fn($a, $b) => $a['mtime'] <=> $b['mtime']);
+    while (count($entries) > NETDISK_LOCAL_CACHE_MAX_FILES || $totalBytes > NETDISK_LOCAL_CACHE_MAX_BYTES) {
+        $oldest = array_shift($entries);
+        if (!$oldest) {
+            break;
+        }
+        $totalBytes -= (int) $oldest['size'];
+        @unlink($oldest['path']);
+    }
+}
+
 function warmLocalCache(string $url, string $cachePath): bool {
     $tmpPath = $cachePath . '.tmp';
     $dir = dirname($cachePath);
@@ -168,10 +204,14 @@ function warmLocalCache(string $url, string $cachePath): bool {
         return false;
     }
     rename($tmpPath, $cachePath);
+    cleanLocalCacheDir();
     return true;
 }
 
 function proxyRemoteFile(string $url, string $fallbackContentType = 'audio/mpeg', ?string $cachePath = null): void {
+    if ($cachePath) {
+        cleanLocalCacheDir();
+    }
     if ($cachePath && isLocalCacheFresh($cachePath)) {
         streamLocalFile($cachePath, $fallbackContentType);
     }

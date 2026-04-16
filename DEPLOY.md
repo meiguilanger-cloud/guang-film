@@ -97,7 +97,23 @@ Use `.env.example` as the checklist for:
 - app environment flags
 - storage credentials/tokens
 
-## 7. Cloudflare guidance
+## 7. Small-cache policy for this server
+
+This server is resource-constrained and should not be treated as a large media cache node.
+
+Fixed operating rule:
+
+- keep audio cache small and short-lived
+- use Baidu Netdisk for formal long-term music storage
+- use the server only for lightweight proxying and temporary hot-cache relief
+
+Current implementation direction:
+
+- short-lived local hot cache for proxied audio
+- aggressive cleanup of expired cache files
+- cap local cache size/file count instead of allowing unbounded growth
+
+## 8. Cloudflare guidance
 
 Recommended caching posture:
 
@@ -111,7 +127,7 @@ Recommended caching posture:
 Cloudflare should front the domains, but the site should keep ownership of playback URLs.
 Do not expose raw Baidu Netdisk links to the browser as your formal long-term playback URLs.
 
-## 8. Update flow
+## 9. Update flow
 
 On the server:
 
@@ -124,7 +140,7 @@ sudo systemctl reload php8.2-fpm
 
 If you later add migrations, cache warmup, or build steps, extend this flow.
 
-## 9. Important repository boundary
+## 10. Important repository boundary
 
 This repository intentionally excludes:
 
