@@ -4,7 +4,7 @@ require_once 'db.php';
 
 $error = '';
 $success = '';
-$defaultAvatar = '../images/starwaves-logo.svg';
+$defaultAvatar = resolvePublicAssetUrl('images/starwaves-logo.svg');
 
 function handleAvatarUpload(?array $file, ?string &$error): ?string {
     if (!$file || ($file['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_NO_FILE) {
@@ -163,6 +163,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </form>
     </div>
 </div>
-<script src="/js/xingzai-widget.js" data-api="/backend/xingzai_chat.php" data-avatar="/images/xingzai-avatar.jpg"></script>
+<script src="<?php echo e(resolvePublicAssetUrl('js/xingzai-widget.js')); ?>" data-api="/backend/xingzai_chat.php" data-avatar="<?php echo e(resolvePublicAssetUrl('images/xingzai-avatar.jpg')); ?>"></script>
 </body>
 </html>

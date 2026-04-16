@@ -197,7 +197,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$error) {
     }
 }
 
-$avatarSrc = !empty($user['avatar_path']) ? $user['avatar_path'] : '../images/starwaves-logo.svg';
+$avatarSrc = resolveAvatarUrl(!empty($user['avatar_path']) ? $user['avatar_path'] : '../images/starwaves-logo.svg');
 ?>
 <!DOCTYPE html>
 <html lang="zh-CN">
@@ -676,6 +676,6 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 });
 </script>
-<script src="/js/xingzai-widget.js" data-api="/backend/xingzai_chat.php" data-avatar="/images/xingzai-avatar.jpg"></script>
+<script src="<?php echo e(resolvePublicAssetUrl('js/xingzai-widget.js')); ?>" data-api="/backend/xingzai_chat.php" data-avatar="<?php echo e(resolvePublicAssetUrl('images/xingzai-avatar.jpg')); ?>"></script>
 </body>
 </html>

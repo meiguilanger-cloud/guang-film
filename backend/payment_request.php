@@ -93,7 +93,7 @@ if (!$requestRow && !empty($_GET['token'])) {
 <div class="backend-shell">
     <div class="backend-topbar">
         <div class="backend-brand">
-            <img src="../images/starwaves-logo.svg" alt="logo">
+            <img src="<?php echo e(resolvePublicAssetUrl('images/starwaves-logo.svg')); ?>" alt="logo">
             <div>
                 <strong>生成充值链</strong>
                 <span>生成唯一 token，管理员确认到账后再充值积分</span>
@@ -163,6 +163,6 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 });
 </script>
-<script src="/js/xingzai-widget.js" data-api="/backend/xingzai_chat.php" data-avatar="/images/xingzai-avatar.jpg"></script>
+<script src="<?php echo e(resolvePublicAssetUrl('js/xingzai-widget.js')); ?>" data-api="/backend/xingzai_chat.php" data-avatar="<?php echo e(resolvePublicAssetUrl('images/xingzai-avatar.jpg')); ?>"></script>
 </body>
 </html>
