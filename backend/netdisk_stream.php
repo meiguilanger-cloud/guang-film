@@ -5,6 +5,7 @@ require_once __DIR__ . '/utils.php';
 const NETDISK_DLINK_TTL_SECONDS = 7 * 3600;
 const NETDISK_DLINK_REFRESH_BUFFER_SECONDS = 3600;
 const NETDISK_VALIDATE_TIMEOUT_SECONDS = 8;
+const NETDISK_LOCAL_CACHE_TTL_SECONDS = 1800;
 
 function fail(int $code, string $message): void {
     http_response_code($code);
@@ -66,7 +67,119 @@ function guessMimeTypeFromPath(string $path): string {
     };
 }
 
-function proxyRemoteFile(string $url, string $fallbackContentType = 'audio/mpeg'): void {
+function localCacheDir(): string {
+    $dir = __DIR__ . '/../storage/cache/audio';
+    if (!is_dir($dir)) {
+        mkdir($dir, 0755, true);
+    }
+    return $dir;
+}
+
+function localCachePath(int $songId, string $variant, string $archivePath): string {
+    $ext = strtolower(pathinfo($archivePath, PATHINFO_EXTENSION));
+    $safeExt = preg_match('/^[a-z0-9]{1,8}$/', $ext) ? $ext : 'bin';
+    return localCacheDir() . '/' . $songId . '_' . preg_replace('/[^a-z0-9_\-]/i', '_', $variant) . '.' . $safeExt;
+}
+
+function isLocalCacheFresh(string $path): bool {
+    return is_file($path) && (filemtime($path) ?: 0) >= (time() - NETDISK_LOCAL_CACHE_TTL_SECONDS) && filesize($path) > 0;
+}
+
+function streamLocalFile(string $path, string $contentType): void {
+    if (!is_file($path)) {
+        fail(404, 'Local cache file missing');
+    }
+    if (ob_get_level() > 0) {
+        @ob_end_clean();
+    }
+
+    $size = filesize($path);
+    $start = 0;
+    $end = $size - 1;
+    $statusCode = 200;
+
+    header('Content-Type: ' . $contentType);
+    header('Accept-Ranges: bytes');
+    header('Cache-Control: public, max-age=600');
+
+    if (!empty($_SERVER['HTTP_RANGE']) && preg_match('/bytes=(\d*)-(\d*)/', (string) $_SERVER['HTTP_RANGE'], $matches)) {
+        $rangeStart = $matches[1] === '' ? 0 : (int) $matches[1];
+        $rangeEnd = $matches[2] === '' ? $end : (int) $matches[2];
+        if ($rangeStart > $end || $rangeEnd < $rangeStart) {
+            header('Content-Range: bytes */' . $size, true, 416);
+            exit;
+        }
+        $start = $rangeStart;
+        $end = min($rangeEnd, $end);
+        $statusCode = 206;
+        header('Content-Range: bytes ' . $start . '-' . $end . '/' . $size);
+    }
+
+    $length = $end - $start + 1;
+    http_response_code($statusCode);
+    header('Content-Length: ' . $length);
+
+    $fh = fopen($path, 'rb');
+    if (!$fh) {
+        fail(500, 'Failed to read local cache file');
+    }
+    fseek($fh, $start);
+    $remaining = $length;
+    while ($remaining > 0 && !feof($fh)) {
+        $chunk = fread($fh, min(65536, $remaining));
+        if ($chunk === false) {
+            break;
+        }
+        $remaining -= strlen($chunk);
+        echo $chunk;
+        flush();
+    }
+    fclose($fh);
+    exit;
+}
+
+function warmLocalCache(string $url, string $cachePath): bool {
+    $tmpPath = $cachePath . '.tmp';
+    $dir = dirname($cachePath);
+    if (!is_dir($dir)) {
+        mkdir($dir, 0755, true);
+    }
+    $fp = fopen($tmpPath, 'wb');
+    if (!$fp) {
+        return false;
+    }
+    $ch = curl_init($url);
+    curl_setopt_array($ch, [
+        CURLOPT_FOLLOWLOCATION => true,
+        CURLOPT_RETURNTRANSFER => false,
+        CURLOPT_HEADER => false,
+        CURLOPT_CONNECTTIMEOUT => 15,
+        CURLOPT_TIMEOUT => 0,
+        CURLOPT_BUFFERSIZE => 65536,
+        CURLOPT_USERAGENT => 'Starwaves-Netdisk-Proxy/1.0',
+        CURLOPT_FILE => $fp,
+    ]);
+    $ok = curl_exec($ch);
+    $status = (int) curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
+    curl_close($ch);
+    fclose($fp);
+    if ($ok === false || $status >= 400 || !is_file($tmpPath) || filesize($tmpPath) <= 0) {
+        @unlink($tmpPath);
+        return false;
+    }
+    rename($tmpPath, $cachePath);
+    return true;
+}
+
+function proxyRemoteFile(string $url, string $fallbackContentType = 'audio/mpeg', ?string $cachePath = null): void {
+    if ($cachePath && isLocalCacheFresh($cachePath)) {
+        streamLocalFile($cachePath, $fallbackContentType);
+    }
+
+    if ($cachePath && empty($_SERVER['HTTP_RANGE']) && warmLocalCache($url, $cachePath) && isLocalCacheFresh($cachePath)) {
+        streamLocalFile($cachePath, $fallbackContentType);
+    }
+
     if (ob_get_level() > 0) {
         @ob_end_clean();
     }
@@ -84,8 +197,7 @@ function proxyRemoteFile(string $url, string $fallbackContentType = 'audio/mpeg'
 
     header_remove('Content-Type');
     header('Content-Type: ' . $fallbackContentType);
-    header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
-    header('Pragma: no-cache');
+    header('Cache-Control: public, max-age=120');
 
     $ch = curl_init($url);
     curl_setopt_array($ch, [
@@ -266,11 +378,13 @@ $cachedDlink = trim((string) ($song[$dlinkColumn] ?? ''));
 $cachedExpiresAt = (string) ($song[$expiresColumn] ?? '');
 $token = netdiskToken();
 
+$cachePath = localCachePath((int) $song['id'], $variant, $archivePath);
+
 if ($cachedDlink !== '' && isDlinkFresh($cachedExpiresAt)) {
     $authorizedCachedDlink = buildAuthorizedDlink($cachedDlink, $token);
     if (validateAuthorizedDlink($authorizedCachedDlink)) {
         logMessage('Netdisk cached stream proxy hit: song_id=' . $id . ', variant=' . $variant . ', archive_path=' . $archivePath);
-        proxyRemoteFile($authorizedCachedDlink, guessMimeTypeFromPath($archivePath));
+        proxyRemoteFile($authorizedCachedDlink, guessMimeTypeFromPath($archivePath), $cachePath);
     }
     logMessage('Netdisk cached dlink invalid, refreshing: song_id=' . $id . ', variant=' . $variant . ', archive_path=' . $archivePath);
 }
@@ -280,4 +394,4 @@ updateCachedDlink($pdo, (int) $song['id'], $variant, $freshDlink);
 $authorizedFreshDlink = buildAuthorizedDlink($freshDlink, $token);
 
 logMessage('Netdisk stream proxy refreshed: song_id=' . $id . ', variant=' . $variant . ', archive_path=' . $archivePath);
-proxyRemoteFile($authorizedFreshDlink, guessMimeTypeFromPath($archivePath));
+proxyRemoteFile($authorizedFreshDlink, guessMimeTypeFromPath($archivePath), $cachePath);
