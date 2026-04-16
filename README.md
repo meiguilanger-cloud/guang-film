@@ -22,7 +22,9 @@ Those paths are excluded in `.gitignore` and should stay on the server or in ext
 - `src/` - source page templates/assets used during site work
 - `docs/` - project notes and design/implementation records
 - `tests/` - lightweight project tests
-- `nginx.conf` - example Nginx config
+- `nginx.conf` - production-oriented Nginx template for `www` / `media` / `static`
+- `.env.example` - deployment variable checklist
+- `DEPLOY.md` - deployment and server layout notes
 - `docker-compose.yml` / `Dockerfile` - container-related setup
 
 ## Current Storage Architecture
