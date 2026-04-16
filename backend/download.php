@@ -62,6 +62,23 @@ function downloadRemoteToTemp(string $url, string $suffix): ?string {
     return $targetPath;
 }
 
+function localUploadPathForSong(array $song): ?string {
+    $raw = trim((string) ($song['file_path'] ?? ''));
+    if ($raw === '') {
+        return null;
+    }
+    $normalized = ltrim(str_replace('\\', '/', $raw), '/');
+    if (preg_match('#^https?://#i', $normalized) || str_starts_with($normalized, 'backend/netdisk_')) {
+        return null;
+    }
+    $candidate = __DIR__ . '/uploads/' . basename($normalized);
+    return is_file($candidate) ? $candidate : null;
+}
+
+function internalSongStreamUrl(int $songId): string {
+    return siteUrl('backend/netdisk_stream.php?id=' . $songId);
+}
+
 function streamFileDownload(string $path, string $downloadName, string $contentType): void {
     if (!is_file($path)) {
         failDownload(404, '文件不存在');
@@ -87,7 +104,7 @@ if (!in_array($format, ['mp3', 'wav'], true)) {
 }
 
 $pdo = getPdo();
-$stmt = $pdo->prepare('SELECT id, title, file_path, storage_type, archive_path FROM songs WHERE id = ? LIMIT 1');
+$stmt = $pdo->prepare('SELECT id, title, file_path, storage_type, archive_path, mastered_file_path, mastered_preview_path, mastered_archive_path, mastered_preview_archive_path, mastering_status FROM songs WHERE id = ? LIMIT 1');
 $stmt->execute([$songId]);
 $song = $stmt->fetch(PDO::FETCH_ASSOC);
 if (!$song) {
@@ -95,15 +112,15 @@ if (!$song) {
 }
 
 $downloadBase = sanitizeDownloadFilename((string) ($song['title'] ?? 'song'));
-$localPath = __DIR__ . '/uploads/' . ltrim((string) ($song['file_path'] ?? ''), '/');
 $sourcePath = null;
 $tempSource = null;
 $tempOutput = null;
 
-if (is_file($localPath)) {
+$localPath = localUploadPathForSong($song);
+if ($localPath) {
     $sourcePath = $localPath;
 } else {
-    $streamUrl = 'http://127.0.0.1:8080/backend/netdisk_stream.php?id=' . $songId;
+    $streamUrl = internalSongStreamUrl($songId);
     $suffix = '.' . strtolower(pathinfo((string) ($song['archive_path'] ?? $song['file_path'] ?? 'song.mp3'), PATHINFO_EXTENSION) ?: 'mp3');
     $tempSource = downloadRemoteToTemp($streamUrl, $suffix);
     if ($tempSource) {
