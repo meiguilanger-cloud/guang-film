@@ -451,10 +451,10 @@ $totalCount = count($uploadedTracks);
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <meta name="description" content="星浪音乐混音工程页，支持新建工程、上传分轨、自动混音和人工混音双通道入口。" />
     <meta name="keywords" content="星浪音乐,Starwaves Mix,混音,分轨上传,自动混音,人工混音" />
-    <link href="css/bootstrap.css" rel="stylesheet" type="text/css" media="all" />
-    <link href="css/style.css" rel="stylesheet" type="text/css" media="all" />
-    <link href="css/starwaves.css" rel="stylesheet" type="text/css" media="all" />
-    <link href="css/font-awesome.css" rel="stylesheet">
+    <link href="<?php echo htmlspecialchars(siteAssetUrl('css/bootstrap.css')); ?>" rel="stylesheet" type="text/css" media="all" />
+    <link href="<?php echo htmlspecialchars(siteAssetUrl('css/style.css')); ?>" rel="stylesheet" type="text/css" media="all" />
+    <link href="<?php echo htmlspecialchars(siteAssetUrl('css/starwaves.css')); ?>" rel="stylesheet" type="text/css" media="all" />
+    <link href="<?php echo htmlspecialchars(siteAssetUrl('css/font-awesome.css')); ?>" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css?family=Raleway:400,600,700,800" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,600,700" rel="stylesheet">
     <style>
@@ -1688,7 +1688,7 @@ $totalCount = count($uploadedTracks);
                     </button>
                     <h1>
                         <a class="navbar-brand starwaves-brand" href="index.php">
-                            <img src="images/starwaves-logo.svg" alt="星浪音乐" class="brand-mark" />
+                            <img src="<?php echo htmlspecialchars(siteAssetUrl('images/starwaves-logo.svg')); ?>" alt="星浪音乐" class="brand-mark" />
                             <span class="brand-text-wrap"><strong>星浪音乐</strong><em>STARWAVES MUSIC</em></span>
                         </a>
                     </h1>
@@ -1704,7 +1704,7 @@ $totalCount = count($uploadedTracks);
                         </ul>
                     </nav>
                     <?php if ($isLoggedIn && $currentUser): ?>
-                        <?php $navAvatar = !empty($currentUser['avatar_path']) ? 'backend/' . ltrim($currentUser['avatar_path'], '/') : 'images/starwaves-logo.svg'; ?>
+                        <?php $navAvatar = resolveAvatarUrl(!empty($currentUser['avatar_path']) ? 'backend/' . ltrim($currentUser['avatar_path'], '/') : 'images/starwaves-logo.svg'); ?>
                         <a class="site-user-chip" href="backend/admin.php">
                             <img src="<?php echo htmlspecialchars($navAvatar); ?>" alt="avatar">
                             <span><?php echo htmlspecialchars($currentUser['full_name'] ?: $currentUser['username']); ?></span>
@@ -2370,6 +2370,6 @@ $totalCount = count($uploadedTracks);
             syncMixJobForms();
         })();
     </script>
-<script src="/js/xingzai-widget.js" data-api="/backend/xingzai_chat.php" data-avatar="/images/xingzai-avatar.jpg"></script>
+<script src="<?php echo htmlspecialchars(siteAssetUrl('js/xingzai-widget.js')); ?>" data-api="/backend/xingzai_chat.php" data-avatar="<?php echo htmlspecialchars(siteAssetUrl('images/xingzai-avatar.jpg')); ?>"></script>
 </body>
 </html>

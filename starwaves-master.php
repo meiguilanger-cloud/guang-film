@@ -165,12 +165,12 @@ if (count($recentSongs) < 6) {
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <meta name="description" content="星浪音乐母带中心，支持软件母带自动分析、标准化处理与结果回看。" />
-    <link href="css/bootstrap.css" rel="stylesheet" type="text/css" media="all" />
-    <link href="css/owl.carousel.css" rel="stylesheet">
-    <link rel="stylesheet" href="css/team.css" type="text/css" media="all" />
-    <link href="css/style.css" rel="stylesheet" type="text/css" media="all" />
-    <link href="css/starwaves.css" rel="stylesheet" type="text/css" media="all" />
-    <link href="css/font-awesome.css" rel="stylesheet">
+    <link href="<?php echo htmlspecialchars(siteAssetUrl('css/bootstrap.css')); ?>" rel="stylesheet" type="text/css" media="all" />
+    <link href="<?php echo htmlspecialchars(siteAssetUrl('css/owl.carousel.css')); ?>" rel="stylesheet">
+    <link rel="stylesheet" href="<?php echo htmlspecialchars(siteAssetUrl('css/team.css')); ?>" type="text/css" media="all" />
+    <link href="<?php echo htmlspecialchars(siteAssetUrl('css/style.css')); ?>" rel="stylesheet" type="text/css" media="all" />
+    <link href="<?php echo htmlspecialchars(siteAssetUrl('css/starwaves.css')); ?>" rel="stylesheet" type="text/css" media="all" />
+    <link href="<?php echo htmlspecialchars(siteAssetUrl('css/font-awesome.css')); ?>" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css?family=Raleway:400,600,700,800" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,600,700" rel="stylesheet">
     <style>
@@ -241,7 +241,7 @@ if (count($recentSongs) < 6) {
                     </button>
                     <h1>
                         <a class="navbar-brand starwaves-brand" href="index.php">
-                            <img src="images/starwaves-logo.svg" alt="星浪音乐" class="brand-mark" />
+                            <img src="<?php echo htmlspecialchars(siteAssetUrl('images/starwaves-logo.svg')); ?>" alt="星浪音乐" class="brand-mark" />
                             <span class="brand-text-wrap"><strong>星浪音乐</strong><em>STARWAVES MUSIC</em></span>
                         </a>
                     </h1>
@@ -257,7 +257,7 @@ if (count($recentSongs) < 6) {
                         </ul>
                     </nav>
                     <?php if ($isLoggedIn && $currentUser): ?>
-                        <?php $navAvatar = !empty($currentUser['avatar_path']) ? 'backend/' . ltrim($currentUser['avatar_path'], '/') : 'images/starwaves-logo.svg'; ?>
+                        <?php $navAvatar = resolveAvatarUrl(!empty($currentUser['avatar_path']) ? 'backend/' . ltrim($currentUser['avatar_path'], '/') : 'images/starwaves-logo.svg'); ?>
                         <a class="site-user-chip" href="backend/admin.php">
                             <img src="<?php echo htmlspecialchars($navAvatar); ?>" alt="avatar">
                             <span><?php echo htmlspecialchars($currentUser['full_name'] ?: $currentUser['username']); ?></span>
@@ -372,9 +372,9 @@ if (count($recentSongs) < 6) {
                     <?php foreach ($recentSongs as $song): ?>
                         <?php
                             $isDemoSong = !empty($song['is_demo']);
-                            $avatar = !empty($song['avatar_path'])
+                            $avatar = resolveAvatarUrl(!empty($song['avatar_path'])
                                 ? (strpos((string) $song['avatar_path'], 'images/') === 0 ? $song['avatar_path'] : 'backend/' . ltrim($song['avatar_path'], '/'))
-                                : 'images/starwaves-logo.svg';
+                                : 'images/starwaves-logo.svg');
                         ?>
                         <article class="master-song-card">
                             <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
@@ -735,7 +735,7 @@ if (count($recentSongs) < 6) {
             }
         })();
     </script>
-<script src="/js/xingzai-widget.js" data-api="/backend/xingzai_chat.php" data-avatar="/images/xingzai-avatar.jpg"></script>
+<script src="<?php echo htmlspecialchars(siteAssetUrl('js/xingzai-widget.js')); ?>" data-api="/backend/xingzai_chat.php" data-avatar="<?php echo htmlspecialchars(siteAssetUrl('images/xingzai-avatar.jpg')); ?>"></script>
 </body>
 </html>
 
