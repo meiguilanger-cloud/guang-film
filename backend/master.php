@@ -26,12 +26,92 @@ function ensureMasteringJobsTable(PDO $pdo): void {
             preview_file TEXT,
             notes TEXT,
             error_message TEXT,
+            provider_job_id TEXT,
+            provider_name TEXT,
             created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
             updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
             started_at TEXT,
             completed_at TEXT
         )"
     );
+}
+
+function masteringApiBase(): string {
+    return rtrim(trim((string) getenv('MASTERING_API_BASE')), '/');
+}
+
+function masteringApiToken(): string {
+    return trim((string) getenv('MASTERING_API_TOKEN'));
+}
+
+function masteringCallbackToken(): string {
+    return trim((string) getenv('MASTERING_CALLBACK_TOKEN'));
+}
+
+function masteringCallbackUrl(): string {
+    $configured = trim((string) getenv('MASTERING_CALLBACK_URL'));
+    if ($configured !== '') {
+        return $configured;
+    }
+    return absoluteUrl('backend/master_callback.php');
+}
+
+function canDispatchToExternalMastering(): bool {
+    return masteringApiBase() !== '' && masteringApiToken() !== '' && masteringCallbackToken() !== '';
+}
+
+function dispatchExternalMasteringJob(array $song, int $jobId, int $userId, string $style, float $targetLufs): array {
+    $endpoint = masteringApiBase() . '/api/mastering/jobs';
+    $payload = [
+        'job_id' => (string) $jobId,
+        'song_id' => (int) ($song['id'] ?? 0),
+        'user_id' => $userId,
+        'title' => (string) ($song['title'] ?? 'song'),
+        'source_url' => absoluteAudioUrl(resolveSongAudioUrl($song, 'absolute')),
+        'source_format' => strtolower(pathinfo((string) ($song['file_path'] ?? ''), PATHINFO_EXTENSION)) ?: 'mp3',
+        'callback_url' => masteringCallbackUrl(),
+        'callback_token' => masteringCallbackToken(),
+        'want_preview' => true,
+        'want_master_wav' => true,
+        'want_master_mp3' => true,
+        'style' => $style,
+        'target_lufs' => $targetLufs,
+        'notes' => 'software mastering request from starwaves',
+    ];
+
+    $ch = curl_init($endpoint);
+    curl_setopt_array($ch, [
+        CURLOPT_POST => true,
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_TIMEOUT => 30,
+        CURLOPT_HTTPHEADER => [
+            'Authorization: Bearer ' . masteringApiToken(),
+            'Content-Type: application/json',
+        ],
+        CURLOPT_POSTFIELDS => json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+    ]);
+    $body = curl_exec($ch);
+    if ($body === false) {
+        $error = curl_error($ch);
+        curl_close($ch);
+        throw new RuntimeException('external mastering dispatch failed: ' . $error);
+    }
+    $status = (int) curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
+    curl_close($ch);
+    $decoded = json_decode((string) $body, true);
+    if ($status >= 400) {
+        throw new RuntimeException('external mastering returned HTTP ' . $status);
+    }
+    if (!is_array($decoded) || empty($decoded['ok']) || empty($decoded['accepted'])) {
+        throw new RuntimeException('external mastering did not accept the job');
+    }
+
+    return [
+        'provider_job_id' => (string) ($decoded['provider_job_id'] ?? ''),
+        'provider_name' => 'external_mastering_api',
+        'status' => (string) ($decoded['status'] ?? 'queued'),
+        'raw' => $decoded,
+    ];
 }
 
 function readJsonInput(): array {
@@ -178,7 +258,7 @@ if ($action === 'list') {
 
     $stmt = $pdo->prepare(
         'SELECT mj.id, mj.song_id, mj.mastering_type, mj.status, mj.style, mj.target_lufs, mj.created_at, mj.updated_at,
-                mj.output_file, mj.preview_file, mj.notes, mj.error_message,
+                mj.output_file, mj.preview_file, mj.notes, mj.error_message, mj.provider_job_id, mj.provider_name,
                 mj.analysis_before_json, mj.analysis_target_json, mj.analysis_after_json,
                 s.title AS song_title
          FROM mastering_jobs mj
@@ -274,18 +354,20 @@ try {
 }
 
 $status = 'queued';
-$notes = '软件母带任务已创建，已进入后台自动母带队列。';
-$sourceAudioUrl = absoluteAudioUrl(resolveSongAudioUrl($song, 'frontend'));
+$sourceAudioUrl = absoluteAudioUrl(resolveSongAudioUrl($song, 'absolute'));
 $inputFile = $sourceAudioUrl;
 $errorMessage = null;
-
 $previewFile = $sourceAudioUrl;
 $outputFile = null;
 $engineName = null;
+$providerJobId = null;
+$providerName = null;
+$dispatchMode = 'local_worker';
+$notes = '软件母带任务已创建，已进入后台自动母带队列。';
 
 $insert = $pdo->prepare(
-    'INSERT INTO mastering_jobs (user_id, song_id, mastering_type, style, target_lufs, status, input_file, output_file, preview_file, notes, error_message, created_at, updated_at, completed_at)
-     VALUES (:user_id, :song_id, :mastering_type, :style, :target_lufs, :status, :input_file, :output_file, :preview_file, :notes, :error_message, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, :completed_at)'
+    'INSERT INTO mastering_jobs (user_id, song_id, mastering_type, style, target_lufs, status, input_file, output_file, preview_file, notes, error_message, provider_job_id, provider_name, created_at, updated_at, completed_at)
+     VALUES (:user_id, :song_id, :mastering_type, :style, :target_lufs, :status, :input_file, :output_file, :preview_file, :notes, :error_message, :provider_job_id, :provider_name, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, :completed_at)'
 );
 $insert->execute([
     ':user_id' => (int) $_SESSION['user_id'],
@@ -299,17 +381,59 @@ $insert->execute([
     ':preview_file' => $previewFile,
     ':notes' => $notes,
     ':error_message' => $errorMessage,
+    ':provider_job_id' => null,
+    ':provider_name' => null,
     ':completed_at' => null,
 ]);
 
 $jobId = (int) $pdo->lastInsertId();
-$workerCommand = sprintf(
-    'php %s %d > /dev/null 2>&1 &',
-    escapeshellarg(__DIR__ . '/master_worker.php'),
-    $jobId
-);
-@exec($workerCommand);
-logMessage('Mastering job created: job_id=' . $jobId . ', song_id=' . $songId . ', type=' . $masteringType . ', user_id=' . (int) $_SESSION['user_id'] . ', status=' . $status);
+
+if (canDispatchToExternalMastering()) {
+    try {
+        $dispatch = dispatchExternalMasteringJob($song, $jobId, (int) $_SESSION['user_id'], $style, $targetLufs);
+        $providerJobId = $dispatch['provider_job_id'] !== '' ? $dispatch['provider_job_id'] : (string) $jobId;
+        $providerName = $dispatch['provider_name'];
+        $dispatchMode = 'external_api';
+        $status = $dispatch['status'] !== '' ? $dispatch['status'] : 'queued';
+        $notes = '软件母带任务已发送到外部母带服务，等待回调结果。';
+        $pdo->prepare('UPDATE mastering_jobs SET status = :status, notes = :notes, provider_job_id = :provider_job_id, provider_name = :provider_name, updated_at = CURRENT_TIMESTAMP WHERE id = :id')
+            ->execute([
+                ':status' => $status,
+                ':notes' => $notes,
+                ':provider_job_id' => $providerJobId,
+                ':provider_name' => $providerName,
+                ':id' => $jobId,
+            ]);
+        $pdo->prepare('UPDATE songs SET mastering_status = :status, mastering_job_id = :mastering_job_id WHERE id = :song_id')
+            ->execute([
+                ':status' => 'queued',
+                ':mastering_job_id' => $jobId,
+                ':song_id' => $songId,
+            ]);
+        logMessage('Mastering job dispatched externally: job_id=' . $jobId . ', provider_job_id=' . $providerJobId . ', song_id=' . $songId);
+    } catch (Throwable $e) {
+        $errorMessage = $e->getMessage();
+        $notes = '外部软件母带服务暂时不可用，已自动切回本地母带 worker 兜底。';
+        logMessage('External mastering dispatch failed, fallback to local worker: job_id=' . $jobId . ', error=' . $errorMessage);
+    }
+}
+
+if ($dispatchMode === 'local_worker') {
+    $workerCommand = sprintf(
+        'php %s %d > /dev/null 2>&1 &',
+        escapeshellarg(__DIR__ . '/master_worker.php'),
+        $jobId
+    );
+    @exec($workerCommand);
+    $pdo->prepare('UPDATE songs SET mastering_status = :status, mastering_job_id = :mastering_job_id WHERE id = :song_id')
+        ->execute([
+            ':status' => 'queued',
+            ':mastering_job_id' => $jobId,
+            ':song_id' => $songId,
+        ]);
+}
+
+logMessage('Mastering job created: job_id=' . $jobId . ', song_id=' . $songId . ', type=' . $masteringType . ', user_id=' . (int) $_SESSION['user_id'] . ', status=' . $status . ', dispatch=' . $dispatchMode);
 
 masterJson(200, [
     'ok' => true,
@@ -326,6 +450,9 @@ masterJson(200, [
         'output_file' => $outputFile,
         'preview_file' => $previewFile,
         'engine' => $engineName,
+        'provider_job_id' => $providerJobId,
+        'provider_name' => $providerName,
+        'dispatch_mode' => $dispatchMode,
         'analysis_before_json' => null,
         'analysis_target_json' => null,
         'analysis_after_json' => null,

@@ -77,6 +77,8 @@ function runMigrations(PDO $pdo): void {
     ensureColumn($pdo, 'mastering_jobs', 'analysis_before_json', 'TEXT');
     ensureColumn($pdo, 'mastering_jobs', 'analysis_target_json', 'TEXT');
     ensureColumn($pdo, 'mastering_jobs', 'analysis_after_json', 'TEXT');
+    ensureColumn($pdo, 'mastering_jobs', 'provider_job_id', 'TEXT');
+    ensureColumn($pdo, 'mastering_jobs', 'provider_name', 'TEXT');
     ensureColumn($pdo, 'payment_requests', 'request_token', 'TEXT');
     ensureColumn($pdo, 'payment_requests', 'note', 'TEXT');
     ensureColumn($pdo, 'payment_requests', 'status', "TEXT NOT NULL DEFAULT 'pending'");

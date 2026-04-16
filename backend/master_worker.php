@@ -18,6 +18,8 @@ function ensureMasteringJobsTable(PDO $pdo): void {
             preview_file TEXT,
             notes TEXT,
             error_message TEXT,
+            provider_job_id TEXT,
+            provider_name TEXT,
             created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
             updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
             started_at TEXT,

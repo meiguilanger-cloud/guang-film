@@ -26,6 +26,8 @@ function ensureMasteringJobsTableCallback(PDO $pdo): void {
             preview_file TEXT,
             notes TEXT,
             error_message TEXT,
+            provider_job_id TEXT,
+            provider_name TEXT,
             created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
             updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
             started_at TEXT,
@@ -122,11 +124,13 @@ if (!$song) {
 try {
     if ($status === 'failed') {
         $fullError = trim($errorCode . ' ' . $errorMessage);
-        $pdo->prepare('UPDATE mastering_jobs SET status = :status, notes = :notes, error_message = :error_message, updated_at = CURRENT_TIMESTAMP WHERE id = :id')
+        $pdo->prepare('UPDATE mastering_jobs SET status = :status, notes = :notes, error_message = :error_message, provider_job_id = :provider_job_id, provider_name = :provider_name, updated_at = CURRENT_TIMESTAMP WHERE id = :id')
             ->execute([
                 ':status' => 'processing_failed',
                 ':notes' => '软件母带服务回调失败。',
                 ':error_message' => $fullError !== '' ? $fullError : 'software mastering callback failed',
+                ':provider_job_id' => $providerJobId,
+                ':provider_name' => 'external_mastering_api',
                 ':id' => (int) $job['id'],
             ]);
         $pdo->prepare('UPDATE songs SET mastering_status = :status, mastering_job_id = :mastering_job_id WHERE id = :song_id')
@@ -140,10 +144,12 @@ try {
     }
 
     if ($status !== 'completed') {
-        $pdo->prepare('UPDATE mastering_jobs SET status = :status, notes = :notes, updated_at = CURRENT_TIMESTAMP WHERE id = :id')
+        $pdo->prepare('UPDATE mastering_jobs SET status = :status, notes = :notes, provider_job_id = :provider_job_id, provider_name = :provider_name, updated_at = CURRENT_TIMESTAMP WHERE id = :id')
             ->execute([
                 ':status' => $status,
                 ':notes' => '软件母带服务状态已更新：' . $status,
+                ':provider_job_id' => $providerJobId,
+                ':provider_name' => 'external_mastering_api',
                 ':id' => (int) $job['id'],
             ]);
         $pdo->prepare('UPDATE songs SET mastering_status = :status, mastering_job_id = :mastering_job_id WHERE id = :song_id')
@@ -173,12 +179,14 @@ try {
         ? json_encode(['provider_job_id' => $providerJobId, 'meta' => $meta], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)
         : null;
 
-    $pdo->prepare('UPDATE mastering_jobs SET status = :status, output_file = :output_file, preview_file = :preview_file, notes = :notes, error_message = NULL, analysis_after_json = :analysis_after_json, completed_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP WHERE id = :id')
+    $pdo->prepare('UPDATE mastering_jobs SET status = :status, output_file = :output_file, preview_file = :preview_file, notes = :notes, error_message = NULL, provider_job_id = :provider_job_id, provider_name = :provider_name, analysis_after_json = :analysis_after_json, completed_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP WHERE id = :id')
         ->execute([
             ':status' => 'completed',
             ':output_file' => $masteredArchivePath ?: (string) ($job['output_file'] ?? ''),
             ':preview_file' => $masteredPreviewArchivePath ?: (string) ($job['preview_file'] ?? ''),
             ':notes' => '软件母带服务已回调完成，结果已归档到百度网盘。',
+            ':provider_job_id' => $providerJobId,
+            ':provider_name' => 'external_mastering_api',
             ':analysis_after_json' => $analysisAfterJson,
             ':id' => (int) $job['id'],
         ]);
