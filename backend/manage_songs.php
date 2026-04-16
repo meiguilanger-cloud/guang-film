@@ -455,8 +455,14 @@ $statusClasses = [
                                 <div class="backend-song-actions-panel">
                                     <a href="edit_song.php?id=<?php echo (int) $s['id']; ?>">编辑</a>
                                     <a href="edit_lyrics.php?id=<?php echo (int) $s['id']; ?>">歌词</a>
-                                    <a href="download.php?id=<?php echo (int) $s['id']; ?>&format=mp3">下载 MP3</a>
-                                    <a href="download.php?id=<?php echo (int) $s['id']; ?>&format=wav">下载 WAV</a>
+                                    <a href="download.php?id=<?php echo (int) $s['id']; ?>&format=mp3&variant=original">下载原曲 MP3</a>
+                                    <a href="download.php?id=<?php echo (int) $s['id']; ?>&format=wav&variant=original">下载原曲 WAV</a>
+                                    <?php if (!empty($s['mastered_preview_path'])): ?>
+                                        <a href="download.php?id=<?php echo (int) $s['id']; ?>&format=mp3&variant=mastered_preview">下载母带预览</a>
+                                    <?php endif; ?>
+                                    <?php if (!empty($s['mastered_file_path'])): ?>
+                                        <a href="download.php?id=<?php echo (int) $s['id']; ?>&format=wav&variant=mastered_file">下载母带成品</a>
+                                    <?php endif; ?>
                                     <?php if (!empty($s['lrc_path'])): ?>
                                         <a href="<?php echo e($s['lrc_path']); ?>" target="_blank">LRC</a>
                                     <?php endif; ?>

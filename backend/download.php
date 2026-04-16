@@ -62,8 +62,13 @@ function downloadRemoteToTemp(string $url, string $suffix): ?string {
     return $targetPath;
 }
 
-function localUploadPathForSong(array $song): ?string {
-    $raw = trim((string) ($song['file_path'] ?? ''));
+function localSongPathForVariant(array $song, string $variant): ?string {
+    $field = match ($variant) {
+        'mastered_preview' => 'mastered_preview_path',
+        'mastered_file' => 'mastered_file_path',
+        default => 'file_path',
+    };
+    $raw = trim((string) ($song[$field] ?? ''));
     if ($raw === '') {
         return null;
     }
@@ -71,12 +76,25 @@ function localUploadPathForSong(array $song): ?string {
     if (preg_match('#^https?://#i', $normalized) || str_starts_with($normalized, 'backend/netdisk_')) {
         return null;
     }
-    $candidate = __DIR__ . '/uploads/' . basename($normalized);
+
+    $baseDir = __DIR__ . '/uploads/';
+    if ($variant === 'mastered_preview' || $variant === 'mastered_file') {
+        $candidateStorage = dirname(__DIR__) . '/' . $normalized;
+        if (is_file($candidateStorage)) {
+            return $candidateStorage;
+        }
+    }
+
+    $candidate = $baseDir . basename($normalized);
     return is_file($candidate) ? $candidate : null;
 }
 
-function internalSongStreamUrl(int $songId): string {
-    return siteUrl('backend/netdisk_stream.php?id=' . $songId);
+function internalSongStreamUrl(int $songId, string $variant): string {
+    $query = ['id' => $songId];
+    if ($variant !== 'original') {
+        $query['variant'] = $variant;
+    }
+    return siteUrl('backend/netdisk_stream.php?' . http_build_query($query));
 }
 
 function streamFileDownload(string $path, string $downloadName, string $contentType): void {
@@ -96,11 +114,15 @@ function streamFileDownload(string $path, string $downloadName, string $contentT
 
 $songId = (int) ($_GET['id'] ?? 0);
 $format = strtolower(trim((string) ($_GET['format'] ?? 'mp3')));
+$variant = trim((string) ($_GET['variant'] ?? 'original'));
 if ($songId <= 0) {
     failDownload(400, '无效歌曲');
 }
 if (!in_array($format, ['mp3', 'wav'], true)) {
     failDownload(400, '仅支持 mp3 或 wav');
+}
+if (!in_array($variant, ['original', 'mastered_preview', 'mastered_file'], true)) {
+    failDownload(400, '无效下载类型');
 }
 
 $pdo = getPdo();
@@ -112,16 +134,26 @@ if (!$song) {
 }
 
 $downloadBase = sanitizeDownloadFilename((string) ($song['title'] ?? 'song'));
+if ($variant === 'mastered_preview') {
+    $downloadBase .= '-master-preview';
+} elseif ($variant === 'mastered_file') {
+    $downloadBase .= '-master';
+}
 $sourcePath = null;
 $tempSource = null;
 $tempOutput = null;
 
-$localPath = localUploadPathForSong($song);
+$localPath = localSongPathForVariant($song, $variant);
 if ($localPath) {
     $sourcePath = $localPath;
 } else {
-    $streamUrl = internalSongStreamUrl($songId);
-    $suffix = '.' . strtolower(pathinfo((string) ($song['archive_path'] ?? $song['file_path'] ?? 'song.mp3'), PATHINFO_EXTENSION) ?: 'mp3');
+    $archiveSource = match ($variant) {
+        'mastered_preview' => (string) ($song['mastered_preview_archive_path'] ?? $song['mastered_preview_path'] ?? ''),
+        'mastered_file' => (string) ($song['mastered_archive_path'] ?? $song['mastered_file_path'] ?? ''),
+        default => (string) ($song['archive_path'] ?? $song['file_path'] ?? ''),
+    };
+    $streamUrl = internalSongStreamUrl($songId, $variant);
+    $suffix = '.' . strtolower(pathinfo($archiveSource ?: 'song.mp3', PATHINFO_EXTENSION) ?: 'mp3');
     $tempSource = downloadRemoteToTemp($streamUrl, $suffix);
     if ($tempSource) {
         $sourcePath = $tempSource;
@@ -129,7 +161,7 @@ if ($localPath) {
 }
 
 if (!$sourcePath) {
-    failDownload(404, '歌曲源文件不存在');
+    failDownload(404, $variant === 'original' ? '歌曲源文件不存在' : '母带源文件不存在');
 }
 
 register_shutdown_function(static function () use (&$tempSource, &$tempOutput): void {
