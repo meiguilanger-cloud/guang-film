@@ -224,8 +224,7 @@ if (count($recentSongs) < 6) {
         .master-page-indicator input { width:72px; border:0; background:transparent; text-align:center; color:#173056; font-weight:700; }
 
         @media (max-width: 991px) {
-            .master-flow-grid, .master-option-grid, .master-song-grid, .master-process-grid, .master-order-grid, .master-order-fields, .master-metrics { grid-template-columns: 1fr; }
-        }
+            .master-flow-grid, .master-option-grid, .master-song-grid, .master-process-grid, .master-order-grid, .master-order-fields, .master-metrics { grid-template-columns: 1fr;}
     </style>
 </head>
 <body class="has-song-bottom-player master-page">

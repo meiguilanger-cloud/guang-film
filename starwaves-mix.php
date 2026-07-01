@@ -1670,9 +1670,7 @@ $totalCount = count($uploadedTracks);
 
             .mix-track-list small {
                 display: block;
-                margin-top: 6px;
-            }
-        }
+                margin-top: 6px;}
     </style>
 </head>
 <body>

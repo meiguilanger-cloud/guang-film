@@ -1266,9 +1266,7 @@ try {
             }
             .navbar-collapse.mobile-open .site-entry-actions {
                 display: grid;
-                gap: 10px;
-            }
-        }
+                gap: 10px;}
     </style>
 <style>
 .swai-login-note {
